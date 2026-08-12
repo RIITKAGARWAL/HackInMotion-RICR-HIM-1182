@@ -1,6 +1,6 @@
 <div align="center">
 
-  <h1>💰 Spensight</h1>
+  <h1>💰 SpenSight</h1>
 
   <p><i>“Built on coffee, late-night code, and a moving Metro Train.”</i></p>
 
