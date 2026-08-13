@@ -92,5 +92,6 @@ Real financial health goes beyond basic expense logging—it requires **intellig
 
 ## 🌐 Live Deployment
 
-The web application is deployed and accessible at:  
-👉 **[https://riitkagarwal.github.io/HackInMotion-RICR-HIM-1182/](https://riitkagarwal.github.io/HackInMotion-RICR-HIM-1182/)**
+
+The web application is deployed and accessible at:
+👉 **[https://hackinmotion-ricr-him-1182.onrender.com/login.html](https://hackinmotion-ricr-him-1182.onrender.com/login.html)**
