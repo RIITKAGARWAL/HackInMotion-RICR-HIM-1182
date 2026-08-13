@@ -1,0 +1,7 @@
+/* Responsive Grid & Breakpoints */
+@media (max-width: 768px) {
+  .dashboard-layout { flex-direction: column; }
+  .grid-cards { grid-template-columns: 1fr; }
+  .calc-keypad { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .sidebar { position: fixed; width: 100%; height: auto; z-index: 100; }
+}
