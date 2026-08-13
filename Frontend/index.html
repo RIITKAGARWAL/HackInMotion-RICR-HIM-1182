@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpenSight</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .splash { text-align: center; animation: popIn 0.4s ease; }
+        .splash .brand-badge { width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 18px; }
+        .splash .brand-badge .icon { width: 32px; height: 32px; }
+        .splash h1 { font-size: 32px; font-weight: 800; }
+        .splash p { color: var(--text-muted); margin-top: 8px; font-size: 15px; }
+    </style>
+</head>
+<body>
+    <div class="splash">
+        <div class="brand-badge"><span data-icon="Wallet"></span></div>
+        <h1>SpenSight</h1>
+        <p>Loading your financial dashboard...</p>
+    </div>
+
+    <script src="js/icons.js"></script>
+    <script>
+        document.querySelectorAll('[data-icon]').forEach((el) => {
+            el.innerHTML = SpenIcons.icon(el.getAttribute('data-icon'));
+        });
+        setTimeout(() => {
+            const token = localStorage.getItem('spensight_token');
+            window.location.replace(token ? 'dashboard.html' : 'login.html');
+        }, 800);
+    </script>
+</body>
+</html>

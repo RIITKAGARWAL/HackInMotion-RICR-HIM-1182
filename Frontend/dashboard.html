@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpenSight — Copilot & MyMoney Financial Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2'%3E%3Cpath d='M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="vendor/chart.umd.js"></script>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-close" id="sidebarCloseBtn" aria-label="Close menu"></button>
+            <div>
+                <div class="brand-header" style="margin-bottom: 30px;">
+                    <div class="brand-badge" id="brandBadge"></div>
+                    <span>SpenSight</span>
+                </div>
+                <nav>
+                    <a class="nav-item active" data-target="dashboardView"><span data-icon="LayoutDashboard"></span> Dashboard</a>
+                    <a class="nav-item" data-target="recordsView"><span data-icon="FileText"></span> Records</a>
+                    <a class="nav-item" data-target="budgetsView"><span data-icon="Target"></span> Budgets</a>
+                    <a class="nav-item" data-target="accountsView"><span data-icon="Wallet"></span> Accounts</a>
+                    <a class="nav-item" data-target="categoriesView"><span data-icon="Tag"></span> Categories</a>
+                    <a class="nav-item" data-target="aiView"><span data-icon="Bot"></span> Cleo AI Copilot</a>
+                </nav>
+            </div>
+            <div>
+                <div class="nav-user-card">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <div class="category-circle-icon" style="background: rgba(59,130,246,0.15); color: var(--primary);">
+                            <span data-icon="User"></span>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 700;" id="userNameDisplay">User</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Financial Copilot</div>
+                        </div>
+                    </div>
+                    <button id="logoutBtn" class="btn btn-danger btn-sm" style="width: 100%;"><span data-icon="LogOut"></span> Sign Out</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
+                <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu"><span data-icon="Menu"></span></button>
+            </div>
+
+            <!-- Global Top Accounts Bar -->
+            <div class="mymoney-top-bar">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div class="category-circle-icon" style="background: rgba(59,130,246,0.15); color: var(--primary);">
+                        <span data-icon="Scale"></span>
+                    </div>
+                    <div>
+                        <div class="top-balance-label">All Accounts Balance</div>
+                        <div class="top-balance-value" id="topAllAccountsBalance">₹0.00</div>
+                    </div>
+                </div>
+                <div class="top-stats">
+                    <div class="top-stat">
+                        <span class="top-stat-negative" data-icon="TrendingDown"></span>
+                        <div>
+                            <div class="top-balance-label">Expense So Far</div>
+                            <div style="font-size: 17px; font-weight: 800; color: var(--accent-red);" id="topExpenseSoFar">₹0.00</div>
+                        </div>
+                    </div>
+                    <div class="top-stat">
+                        <span class="top-stat-positive" data-icon="TrendingUp"></span>
+                        <div>
+                            <div class="top-balance-label">Income So Far</div>
+                            <div style="font-size: 17px; font-weight: 800; color: var(--accent-green);" id="topIncomeSoFar">₹0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-bar">
+                <div>
+                    <h1 class="page-title" id="pageTitle">Financial Dashboard</h1>
+                    <p class="page-subtitle">Copilot & MyMoney Analytics</p>
+                </div>
+                <div id="filterHeaderBar" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div class="range-chips" id="rangeChips">
+                        <button class="range-chip" data-range="daily">DAILY</button>
+                        <button class="range-chip" data-range="weekly">WEEKLY</button>
+                        <button class="range-chip active active-filter" data-range="monthly">MONTHLY</button>
+                        <button class="range-chip" data-range="yearly">YEARLY</button>
+                    </div>
+                    <input type="month" id="monthPicker" class="input-field" style="width: 170px; height: 38px;">
+                    <button id="displayOptionsBtn" class="btn btn-ghost btn-sm"><span data-icon="Settings"></span> OPTIONS</button>
+                </div>
+            </div>
+
+            <!-- VIEW 1: DASHBOARD -->
+            <div id="dashboardView" class="view-section active-view">
+                <div class="grid-cards">
+                    <div class="dashboard-card stat-card">
+                        <div class="card-title"><span data-icon="Activity"></span> Financial Health Score</div>
+                        <div class="card-value" id="healthScoreDisplay">-- / 100</div>
+                        <div id="healthScoreBadge" class="score-badge score-healthy"><span data-icon="Sparkles"></span> Calculating...</div>
+                    </div>
+
+                    <div class="dashboard-card stat-card">
+                        <div class="card-title"><span data-icon="PiggyBank"></span> Savings Rate</div>
+                        <div class="card-value positive" id="savingsRateDisplay">0%</div>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">Target: ≥ 20.0%</p>
+                    </div>
+
+                    <div class="dashboard-card stat-card">
+                        <div class="card-title"><span data-icon="Bell"></span> Active AI Insights</div>
+                        <div class="card-value" id="activeInsightsDisplay">0 Alerts</div>
+                        <p style="font-size: 12px; color: var(--primary); margin-top: 8px;">Automated anomaly detection</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3 style="margin-bottom: 12px; font-size: 15px; display: flex; align-items: center; gap: 8px;"><span data-icon="Upload"></span> Import Statement (CSV)</h3>
+                    <div class="dropzone" id="dropzone">
+                        <span data-icon="CloudDownload"></span>
+                        <p style="font-size: 14px; font-weight: 600;">Drag and drop your bank CSV file here</p>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Auto-categorized with Cleo's smart merchant engine. Debit &amp; credit columns supported.</p>
+                        <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="grid-cards charts-grid" style="grid-template-columns: 2fr 1fr;">
+                    <div class="dashboard-card">
+                        <h3 style="font-size: 15px; display: flex; align-items: center; gap: 8px;"><span data-icon="PieChart"></span> Spending Breakdown by Category</h3>
+                        <div class="chart-box">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                        <div class="chart-legend-list" id="categoryLegend"></div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3 style="font-size: 15px; display: flex; align-items: center; gap: 8px;"><span data-icon="AlertTriangle"></span> Cleo Smart Alerts</h3>
+                        <div id="aiAlertsContainer" style="margin-top: 16px; display: flex; flex-direction: column; gap: 12px; max-height: 320px; overflow-y: auto;">
+                            <p style="color: var(--text-muted); font-size: 13px;">Scanning your transactions for anomalies...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-cards charts-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="dashboard-card">
+                        <h3 style="font-size: 15px; display: flex; align-items: center; gap: 8px;"><span data-icon="LineChart"></span> Spending Trend</h3>
+                        <div class="chart-box" style="height: 220px; max-height: 220px;">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3 style="font-size: 15px; display: flex; align-items: center; gap: 8px;"><span data-icon="Banknote"></span> Income vs Expense</h3>
+                        <div class="chart-box" style="height: 220px; max-height: 220px;">
+                            <canvas id="cashflowChart"></canvas>
+                        </div>
+                        <div style="display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap;">
+                            <div style="flex: 1; text-align: center; padding: 10px; background: rgba(255,255,255,0.04); border-radius: 10px;">
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">CASH FLOW RATIO</div>
+                                <div style="font-size: 18px; font-weight: 800; margin-top: 4px;" id="cashflowRatioDisplay">--</div>
+                            </div>
+                            <div style="flex: 1; text-align: center; padding: 10px; background: rgba(255,255,255,0.04); border-radius: 10px;">
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">NET SO FAR</div>
+                                <div style="font-size: 18px; font-weight: 800; margin-top: 4px;" id="netSoFarDisplay">₹0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3 style="font-size: 15px; display: flex; align-items: center; gap: 8px;"><span data-icon="Receipt"></span> Recent Transactions</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Account</th>
+                                    <th>Amount</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionTableBody">
+                                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading recent transactions...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: RECORDS -->
+            <div id="recordsView" class="view-section">
+                <div class="dashboard-card">
+                    <h3 style="font-size: 15px; display: flex; align-items: center; gap: 8px;"><span data-icon="ClipboardList"></span> Transaction Ledger</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Account</th>
+                                    <th>Amount</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="allTransactionsTable">
+                                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading transactions...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: BUDGETS -->
+            <div id="budgetsView" class="view-section">
+                <div class="grid-cards" style="grid-template-columns: 1fr 1fr;">
+                    <div class="dashboard-card" style="text-align: center; padding: 18px;">
+                        <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 6px;"><span data-icon="Target"></span> TOTAL BUDGET</div>
+                        <div style="font-size: 24px; font-weight: 800; color: #10b981; margin-top: 4px;" id="totalBudgetDisplay">₹0.00</div>
+                    </div>
+                    <div class="dashboard-card" style="text-align: center; padding: 18px;">
+                        <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 6px;"><span data-icon="Flame"></span> TOTAL SPENT</div>
+                        <div style="font-size: 24px; font-weight: 800; color: #ef4444; margin-top: 4px;" id="totalSpentDisplay">₹0.00</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                    <button id="copyPastBudgetsBtn" class="btn btn-sm" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);">
+                        <span data-icon="RefreshCw"></span> SET FROM PAST MONTHS
+                    </button>
+                    <label class="toggle-row" style="color: var(--text-muted); font-size: 13px; font-weight: 600;">
+                        <span class="toggle" id="carryOverToggle"></span>
+                        Carry Over Monthly Surplus
+                    </label>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3 style="font-size: 15px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;"><span data-icon="Target"></span> Budgeted Categories</h3>
+                    <div id="budgetedCategoriesList" class="budget-grid"></div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3 style="font-size: 15px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;"><span data-icon="Plus"></span> Not Budgeted This Month</h3>
+                    <div id="unbudgetedCategoriesList" class="budget-grid"></div>
+                </div>
+            </div>
+
+            <!-- VIEW 4: ACCOUNTS -->
+            <div id="accountsView" class="view-section">
+                <div class="dashboard-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="font-size: 15px; display: flex; align-items: center; gap: 8px;"><span data-icon="Wallet"></span> Accounts</h3>
+                        <button id="addAccountBtn" class="btn btn-sm"><span data-icon="Plus"></span> ADD NEW ACCOUNT</button>
+                    </div>
+                    <div id="accountsListContainer" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                </div>
+            </div>
+
+            <!-- VIEW 5: CATEGORIES -->
+            <div id="categoriesView" class="view-section">
+                <div class="dashboard-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="font-size: 15px; display: flex; align-items: center; gap: 8px;"><span data-icon="TrendingUp"></span> Income Categories</h3>
+                        <button class="btn btn-sm btn-ghost add-category-btn" data-type="income"><span data-icon="Plus"></span> ADD CATEGORY</button>
+                    </div>
+                    <div id="incomeCategoryList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="font-size: 15px; display: flex; align-items: center; gap: 8px;"><span data-icon="TrendingDown"></span> Expense Categories</h3>
+                        <button class="btn btn-sm btn-ghost add-category-btn" data-type="expense"><span data-icon="Plus"></span> ADD CATEGORY</button>
+                    </div>
+                    <div id="expenseCategoryList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                </div>
+            </div>
+
+            <!-- VIEW 6: CLEO AI COPILOT -->
+            <div id="aiView" class="view-section">
+                <div class="dashboard-card chat-container">
+                    <h3 style="font-size: 15px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;"><span data-icon="Sparkles"></span> Cleo Conversational Assistant</h3>
+
+                    <div class="chat-box" id="aiChatBox">
+                        <div class="chat-bubble-ai">
+                            Hello! I am Cleo, your AI financial copilot. Ask me to analyze your spending, check budgets, list subscriptions, or even roast your dining habits.
+                        </div>
+                    </div>
+
+                    <div class="prompt-pills">
+                        <button class="pill-btn" onclick="window.sendQuickPrompt('Roast my dining out expenses this month')"><span data-icon="Flame"></span> Roast my dining</button>
+                        <button class="pill-btn" onclick="window.sendQuickPrompt('Am I on track with my budgets?')"><span data-icon="Target"></span> Budget Check</button>
+                        <button class="pill-btn" onclick="window.sendQuickPrompt('List all detected recurring subscriptions')"><span data-icon="Repeat"></span> Subscriptions</button>
+                        <button class="pill-btn" onclick="window.sendQuickPrompt('How healthy is my finances right now?')"><span data-icon="HeartPulse"></span> Health Score</button>
+                    </div>
+
+                    <form id="aiChatForm">
+                        <input type="text" id="aiChatInput" class="input-field" placeholder="Ask Cleo about your finances..." required>
+                        <button type="submit" class="btn"><span data-icon="Send"></span> Send</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- FLOATING QUICK ADD BUTTON -->
+    <button id="floatingAddBtn" class="floating-fab" aria-label="Add transaction"><span data-icon="Plus"></span></button>
+
+    <!-- QUICK-ADD CALCULATOR MODAL -->
+    <div id="quickAddModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title"><span data-icon="Plus"></span> Quick Add Transaction</span>
+                <button id="closeModalBtn" class="modal-close" aria-label="Cancel"></button>
+            </div>
+
+            <div class="type-tabs-bar">
+                <div class="type-tab" data-type="income"><span data-icon="ArrowUp"></span> INCOME</div>
+                <div class="type-tab active" data-type="expense"><span data-icon="ArrowDown"></span> EXPENSE</div>
+                <div class="type-tab" data-type="transfer"><span data-icon="ArrowLeftRight"></span> TRANSFER</div>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
+                <button type="button" id="pickerAccountBtn" class="picker-btn"><span data-icon="Wallet"></span> <span id="selectedAccountLabel">Select Account</span></button>
+                <button type="button" id="pickerCategoryBtn" class="picker-btn"><span data-icon="Tag"></span> <span id="selectedCategoryLabel">Select Category</span></button>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                <button type="button" id="pickerToAccountBtn" class="picker-btn" style="display: none;"><span data-icon="ArrowLeftRight"></span> <span id="selectedToAccountLabel">To Account</span></button>
+            </div>
+
+            <input type="date" id="txDateInput" class="input-field" style="margin-bottom: 12px;">
+            <input type="text" id="txNotesInput" class="input-field" placeholder="Add notes / description..." style="margin-bottom: 12px;">
+
+            <div class="calc-display-screen">
+                <span id="calcDisplay">0</span>
+            </div>
+
+            <div class="calc-keypad">
+                <button type="button" class="calc-btn calc-op" data-key="+">+</button>
+                <button type="button" class="calc-btn" data-key="7">7</button>
+                <button type="button" class="calc-btn" data-key="8">8</button>
+                <button type="button" class="calc-btn" data-key="9">9</button>
+
+                <button type="button" class="calc-btn calc-op" data-key="-">-</button>
+                <button type="button" class="calc-btn" data-key="4">4</button>
+                <button type="button" class="calc-btn" data-key="5">5</button>
+                <button type="button" class="calc-btn" data-key="6">6</button>
+
+                <button type="button" class="calc-btn calc-op" data-key="*">×</button>
+                <button type="button" class="calc-btn" data-key="1">1</button>
+                <button type="button" class="calc-btn" data-key="2">2</button>
+                <button type="button" class="calc-btn" data-key="3">3</button>
+
+                <button type="button" class="calc-btn calc-op" data-key="/">÷</button>
+                <button type="button" class="calc-btn" data-key="0">0</button>
+                <button type="button" class="calc-btn" data-key=".">.</button>
+                <button type="button" class="calc-btn calc-eq" data-key="=">=</button>
+            </div>
+
+            <button id="saveTransactionBtn" class="btn btn-success btn-lg" style="width: 100%; margin-top: 16px;"><span data-icon="Check"></span> SAVE TRANSACTION</button>
+        </div>
+    </div>
+
+    <!-- ACCOUNT PICKER MODAL -->
+    <div id="accountModal" class="modal-overlay" style="z-index: 300;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title"><span data-icon="Wallet"></span> Select an Account</span>
+                <button id="closeAccountModalBtn" class="modal-close"></button>
+            </div>
+            <div id="accountPickerContainer" style="display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- CATEGORY PICKER MODAL -->
+    <div id="categoryModal" class="modal-overlay" style="z-index: 300;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title"><span data-icon="Tag"></span> Select a Category</span>
+                <button id="closeCategoryModalBtn" class="modal-close"></button>
+            </div>
+            <div id="categoryPickerContainer" class="category-grid"></div>
+        </div>
+    </div>
+
+    <!-- ADD ACCOUNT MODAL -->
+    <div id="addAccountModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title"><span data-icon="Plus"></span> Add Account</span>
+                <button id="closeAddAccountModalBtn" class="modal-close"></button>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label class="form-label">ACCOUNT NAME</label>
+                <input type="text" id="newAccountName" class="input-field" placeholder="e.g. HDFC Credit Card">
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label class="form-label">ACCOUNT TYPE</label>
+                <select id="newAccountType" class="input-field">
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                    <option value="Savings" selected>Savings</option>
+                    <option value="Investment">Investment</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label class="form-label">STARTING BALANCE</label>
+                <input type="number" id="newAccountBalance" class="input-field" placeholder="0.00" step="0.01" min="0">
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label class="form-label">COLOR</label>
+                <input type="color" id="newAccountColor" class="input-field" style="height: 44px; padding: 4px;" value="#3b82f6">
+            </div>
+            <button id="saveAccountBtn" class="btn btn-success btn-lg" style="width: 100%;"><span data-icon="Check"></span> CREATE ACCOUNT</button>
+        </div>
+    </div>
+
+    <!-- ADD CATEGORY MODAL -->
+    <div id="addCategoryModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title"><span data-icon="Plus"></span> Add Category</span>
+                <button id="closeAddCategoryModalBtn" class="modal-close"></button>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label class="form-label">CATEGORY NAME</label>
+                <input type="text" id="newCategoryName" class="input-field" placeholder="e.g. Pets">
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label class="form-label">TYPE</label>
+                <select id="newCategoryType" class="input-field">
+                    <option value="expense" selected>Expense</option>
+                    <option value="income">Income</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label class="form-label">COLOR</label>
+                <input type="color" id="newCategoryColor" class="input-field" style="height: 44px; padding: 4px;" value="#6b7280">
+            </div>
+            <button id="saveCategoryBtn" class="btn btn-success btn-lg" style="width: 100%;"><span data-icon="Check"></span> CREATE CATEGORY</button>
+        </div>
+    </div>
+
+    <!-- DISPLAY OPTIONS MODAL -->
+    <div id="displayOptionsModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title"><span data-icon="Settings"></span> Display Options</span>
+                <button id="closeDisplayOptionsBtn" class="modal-close"></button>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label class="form-label">VIEW MODE</label>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                    <label class="toggle-row"><input type="radio" name="viewMode" value="daily" style="display: none;"> DAILY</label>
+                    <label class="toggle-row"><input type="radio" name="viewMode" value="weekly" style="display: none;"> WEEKLY</label>
+                    <label class="toggle-row"><input type="radio" name="viewMode" value="monthly" checked style="display: none;"> MONTHLY</label>
+                    <label class="toggle-row"><input type="radio" name="viewMode" value="yearly" style="display: none;"> YEARLY</label>
+                </div>
+            </div>
+            <button id="applyDisplayOptionsBtn" class="btn" style="width: 100%;"><span data-icon="Check"></span> Apply &amp; Close</button>
+        </div>
+    </div>
+
+    <!-- CONFIRM MODAL -->
+    <div id="confirmModal" class="modal-overlay" style="z-index: 400;">
+        <div class="modal-card" style="max-width: 380px;">
+            <div class="modal-header">
+                <span class="modal-title"><span data-icon="AlertTriangle"></span> Confirm</span>
+                <button id="closeConfirmModalBtn" class="modal-close"></button>
+            </div>
+            <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;" id="confirmMessage">Are you sure?</p>
+            <div style="display: flex; gap: 12px;">
+                <button id="confirmCancelBtn" class="btn btn-ghost" style="flex: 1;">Cancel</button>
+                <button id="confirmOkBtn" class="btn btn-danger" style="flex: 1;"><span data-icon="Trash2"></span> Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/icons.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script>
+      function sendQuickPrompt(text) {
+        const input = document.getElementById('aiChatInput');
+        const form = document.getElementById('aiChatForm');
+        if (input && form) {
+          input.value = text;
+          form.dispatchEvent(new Event('submit'));
+        }
+      }
+      window.sendQuickPrompt = sendQuickPrompt;
+    </script>
+</body>
+</html>
