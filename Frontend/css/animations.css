@@ -1,0 +1,6 @@
+/* Micro-interaction animation keyframes */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+  50% { box-shadow: 0 0 25px rgba(59, 130, 246, 0.45); }
+}
+.pulse-hover:hover { animation: pulseGlow 1.5s infinite; }
