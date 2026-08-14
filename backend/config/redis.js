@@ -1,22 +1,62 @@
 const Redis = require('ioredis');
 
-// 1. If REDIS_URL is provided in .env (e.g., Upstash / Render Cloud Redis), use it directly.
-// 2. Otherwise fall back to local settings (127.0.0.1 for local dev, or 'redis' inside Docker).
-const redisConfig = process.env.REDIS_URL
-  ? process.env.REDIS_URL
-  : {
-      host: process.env.REDIS_HOST || '127.0.0.1',
-      port: parseInt(process.env.REDIS_PORT, 10) || 6379,
-      password: process.env.REDIS_PASSWORD || undefined,
-      maxRetriesPerRequest: null, // Critical requirement for BullMQ / queues
-    };
+const redisUrl = process.env.REDIS_URL;
+const redisHost = process.env.REDIS_HOST || '127.0.0.1';
+const redisPort = process.env.REDIS_PORT || 6379;
 
-const redis = new Redis(redisConfig, {
-  // Retain maxRetriesPerRequest setting if connecting via URL string
-  maxRetriesPerRequest: null,
-});
+let redisClient = null;
 
-redis.on('connect', () => console.log('Connected to Redis Cache & Queue Cluster'));
-redis.on('error', (err) => console.error('Redis Connection Error:', err));
+// Only initialize Redis if explicitly provided, or configured safely
+const createRedisClient = () => {
+  const options = {
+    maxRetriesPerRequest: null, // Required for BullMQ compatibility
+    enableOfflineQueue: false,  // Don't queue commands if Redis is down
+    retryStrategy(times) {
+      if (times > 3) {
+        console.warn('⚠️ Redis connection unreachable. Running in fallback mode (Redis features disabled).');
+        return null; // Stop retrying after 3 attempts to prevent log spamming
+      }
+      return Math.min(times * 200, 2000);
+    }
+  };
 
-module.exports = redis;
+  if (redisUrl) {
+    return new Redis(redisUrl, options);
+  }
+
+  // If on Render production without REDIS_URL, don't attempt loop
+  if (process.env.NODE_ENV === 'production' && !process.env.REDIS_HOST) {
+    console.warn('ℹ️ No production REDIS_URL set. Dynamic queue caching disabled.');
+    return null;
+  }
+
+  return new Redis({
+    host: redisHost,
+    port: redisPort,
+    ...options
+  });
+};
+
+try {
+  redisClient = createRedisClient();
+
+  if (redisClient) {
+    redisClient.on('connect', () => {
+      console.log('✓ Successfully connected to Redis.');
+    });
+
+    redisClient.on('error', (err) => {
+      // Quiet down ECONNREFUSED spam
+      if (err.code === 'ECONNREFUSED') {
+        console.warn('⚠️ Redis unavailable. App operates in fallback mode.');
+        redisClient.disconnect();
+      } else {
+        console.error('Redis Error:', err.message);
+      }
+    });
+  }
+} catch (error) {
+  console.warn('⚠️ Redis initialization bypassed:', error.message);
+}
+
+module.exports = redisClient;
