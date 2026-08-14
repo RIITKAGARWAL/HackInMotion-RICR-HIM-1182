@@ -12,7 +12,8 @@ const CATEGORY_KEYWORDS = {
     'restaurant', 'cafe', 'dunkin', 'kfc', 'chipotle', 'pizza', 'burger', 'taco',
     'sushi', 'biryani', 'grubhub', 'postmates', 'wendys', 'popeyes', 'panera',
     'bar', 'coffee', 'bakery', 'grocery', 'kroger', 'wholefoods', 'trader joe',
-    'albertsons', 'safeway', 'tesco', 'lidl', 'aldi', 'wawa', '7-eleven', 'fresco'
+    'albertsons', 'safeway', 'tesco', 'lidl', 'aldi', 'wawa', '7-eleven', 'fresco',
+    'swiggy', 'zomato', 'foodpanda', 'eatclub', 'faaso', 'biryani by kilo', 'behrouz'
   ],
   Subscriptions: [
     'netflix', 'spotify', 'hulu', 'apple.com', 'apple tv', 'disney', 'prime video',
@@ -21,7 +22,8 @@ const CATEGORY_KEYWORDS = {
   ],
   Bills: [
     'electric', 'water', 'gas company', 'verizon', 'at&t', 'comcast', 'utility',
-    'power bill', 'internet', 'broadband', 'energy', 'waste', 'sewage', 'phone bill'
+    'power bill', 'internet', 'broadband', 'energy', 'waste', 'sewage', 'phone bill',
+    'recharge', 'reliance jio', 'jio', 'airtel', 'vi recharge', 'bsnl', 'electricity board'
   ],
   Car: [
     'gas station', 'shell', 'chevron', 'exxon', 'bp', 'fuel', 'petrol', 'diesel',
@@ -48,7 +50,7 @@ const CATEGORY_KEYWORDS = {
     'levi', 'under armour', 'puma', 'reebok', 'macy', 'nordstrom', 'shein'
   ],
   Electronics: [
-    'apple store', 'best buy', 'amazon', 'ebay', 'newegg', 'b&h', 'microcenter',
+    'apple store', 'best buy', 'ebay', 'newegg', 'b&h', 'microcenter',
     'samsung', 'sony', 'bose', 'jbl', 'kindle', 'iphone', 'laptop'
   ],
   Insurance: [
@@ -67,7 +69,8 @@ const CATEGORY_KEYWORDS = {
   Telephone: ['verizon wireless', 'at&t mobile', 't-mobile', 'sprint', 'cell phone', 'mobile bill'],
   Transportation: [
     'uber', 'lyft', 'airbnb', 'delta', 'flight', 'hotel', 'marriott', 'hilton',
-    'amtrak', 'greyhound', 'metro', 'subway card', 'bus', 'taxi', 'cab', 'train'
+    'amtrak', 'greyhound', 'metro', 'subway card', 'bus', 'taxi', 'cab', 'train',
+    'ola', 'rapido', 'redbus', 'irctc', 'metro card'
   ],
   Travel: [
     'airline', 'flight', 'airbnb', 'booking.com', 'expedia', 'kayak', 'hotel',
@@ -80,7 +83,8 @@ const CATEGORY_KEYWORDS = {
   ],
   Shopping: [
     'amazon', 'target', 'walmart', 'ebay', 'costco', 'sam\u2019s club', 'sams club',
-    'etsy', 'shopify', 'ali express', 'wish', 'depop', 'poshmark', 'mall'
+    'etsy', 'shopify', 'ali express', 'wish', 'depop', 'poshmark', 'mall',
+    'flipkart', 'myntra', 'ajio', 'snapdeal', 'meesho', 'nykaa'
   ],
   Salary: ['payroll', 'direct deposit', 'wage', 'salary', 'paycheck', 'biweekly', 'paychex', 'adp'],
   Freelance: ['upwork', 'fiverr', 'freelance', 'gig', 'contract', 'invoice', 'square', 'stripe', 'paypal'],

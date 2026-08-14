@@ -49,7 +49,7 @@ function resolveRangeParams(query = {}) {
 
 // Total income / expense / net for a time range
 async function getSummary(userId, query = {}) {
-  const { range, from, to } = resolveRangeParams(query);
+  const { range, from } = resolveRangeParams(query);
   const where = ['t.user_id = $1'];
   const params = [userId];
   let dateClause = '';
@@ -152,7 +152,6 @@ async function getCategoryBreakdown(userId, query = {}) {
 // Monthly / weekly / daily time series of income vs expense (trend charts)
 async function getTrends(userId, query = {}) {
   const { range } = resolveRangeParams(query);
-  const groupBy = RANGE_MAP[range] || RANGE_MAP.monthly;
   const labelSql = RANGE_LABEL_SQL[range] || RANGE_LABEL_SQL.monthly;
 
   const params = [userId];

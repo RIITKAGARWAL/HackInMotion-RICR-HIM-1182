@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SpenSight — Insights Overview</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2'%3E%3Cpath d='M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="vendor/chart.umd.js"></script>
+</head>
+<body>
+    <!-- Fixed mobile top navbar (shown < 900px) -->
+    <header class="mobile-topbar" id="mobileTopbar">
+        <a class="mobile-brand" href="dashboard.html" aria-label="SpenSight home">
+            <div class="brand-badge" id="mobileBrandBadge"><span data-icon="Wallet"></span></div>
+            <span class="mobile-brand-name">SpenSight</span>
+        </a>
+        <div class="mobile-topbar-right">
+            <div class="mobile-user-pill" aria-label="Account">
+                <span class="mobile-user-avatar"><span data-icon="User"></span></span>
+                <span class="mobile-user-meta"><span id="mobileUserName">User</span><span class="mobile-user-acct">/ Personal</span></span>
+            </div>
+            <button class="hamburger" id="mobileHamburgerBtn" aria-label="Open menu"><span data-icon="Menu"></span></button>
+        </div>
+    </header>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-close" id="sidebarCloseBtn" aria-label="Close menu"></button>
+            <div class="drawer-header">
+                <div class="drawer-eyebrow">ACCOUNT</div>
+                <div class="drawer-workspace" id="drawerWorkspaceName">User's Workspace</div>
+            </div>
+            <div>
+                <div class="brand-header" style="margin-bottom: 30px;">
+                    <div class="brand-badge" id="brandBadge"></div>
+                    <span>SpenSight</span>
+                </div>
+                <nav>
+                    <a class="nav-item" href="dashboard.html"><span data-icon="LayoutDashboard"></span> Dashboard</a>
+                    <a class="nav-item" href="dashboard.html"><span data-icon="FileText"></span> Records</a>
+                    <a class="nav-item" href="dashboard.html"><span data-icon="Target"></span> Budgets</a>
+                    <a class="nav-item" href="dashboard.html"><span data-icon="Wallet"></span> Accounts</a>
+                    <a class="nav-item" href="dashboard.html"><span data-icon="Tag"></span> Categories</a>
+                    <a class="nav-item active" href="insights.html"><span data-icon="LineChart"></span> Insights &amp; Analytics</a>
+                    <a class="nav-item" href="dashboard.html"><span data-icon="Bot"></span> Cleo AI Copilot</a>
+                </nav>
+            </div>
+            <div class="sidebar-footer">
+                <button id="logoutBtnDrawer" class="btn btn-danger btn-sm" style="width: 100%;"><span data-icon="LogOut"></span> Sign Out</button>
+            </div>
+        </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <div class="topbar">
+                <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu"><span data-icon="Menu"></span></button>
+                <div class="topbar-user-card">
+                    <div class="category-circle-icon" style="background: rgba(59,130,246,0.15); color: var(--primary); width: 34px; height: 34px;">
+                        <span data-icon="User"></span>
+                    </div>
+                    <div>
+                        <div class="topbar-user-name" id="userNameDisplay">User</div>
+                        <div class="topbar-user-role">Personal</div>
+                    </div>
+                    <button id="logoutBtn" class="btn btn-danger btn-sm" style="width: auto; margin-left: 4px;"><span data-icon="LogOut"></span> Sign Out</button>
+                </div>
+            </div>
+
+            <div class="header-bar">
+                <div>
+                    <h1 class="page-title">Insights Overview</h1>
+                    <p class="page-subtitle">Understand your money — patterns, pace and warnings.</p>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <input type="month" id="monthPicker" class="input-field" style="width: 170px; height: 38px;">
+                    <button id="downloadReportBtn" class="btn btn-sm"><span data-icon="Download"></span> Download Report</button>
+                </div>
+            </div>
+
+            <!-- Hero banner -->
+            <div class="insights-banner">
+                <div>
+                    <div class="top-balance-label" style="color: var(--accent-cyan);">YOUR MONTH IN NUMBERS</div>
+                    <h2 id="bannerHeadline" style="font-size: 24px; font-weight: 800; margin-top: 8px;">Reading your spending…</h2>
+                    <p id="bannerSubtitle" style="color: var(--text-muted); font-size: 13px; margin-top: 6px;">Crunching this month's transactions.</p>
+                    <div class="insights-banner-stats" id="bannerStats"></div>
+                </div>
+                <div class="insights-banner-art" aria-hidden="true">
+                    <svg viewBox="0 0 200 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="gradA" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#3b82f6"/>
+                                <stop offset="100%" stop-color="#8b5cf6"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="20" y="70" width="22" height="50" rx="6" fill="url(#gradA)" opacity="0.5"/>
+                        <rect x="52" y="40" width="22" height="80" rx="6" fill="url(#gradA)"/>
+                        <rect x="84" y="55" width="22" height="65" rx="6" fill="url(#gradA)" opacity="0.7"/>
+                        <rect x="116" y="25" width="22" height="95" rx="6" fill="#10b981" opacity="0.85"/>
+                        <rect x="148" y="60" width="22" height="60" rx="6" fill="url(#gradA)" opacity="0.55"/>
+                        <polyline points="31,70 63,40 95,55 127,25 159,60" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9"/>
+                        <circle cx="127" cy="25" r="5" fill="#f59e0b"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div id="insightsError" class="dashboard-card" style="display: none; border-color: rgba(239,68,68,0.3);">
+                <div style="display: flex; align-items: center; gap: 12px; color: var(--accent-red);">
+                    <span data-icon="AlertTriangle"></span>
+                    <div>
+                        <div style="font-weight: 700;">Couldn't load insights</div>
+                        <div id="insightsErrorMsg" style="font-size: 13px; color: var(--text-muted);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 1: Spending Personality + Category Heatmap -->
+            <div class="insights-section-title"><span data-icon="Sparkles"></span> Spending Personality &amp; Category Heatmap</div>
+
+            <div class="grid-cards insights-grid">
+                <div class="dashboard-card">
+                    <div class="insights-persona-icon"><span data-icon="Activity"></span></div>
+                    <div class="insights-persona-label">SPENDING PERSONALITY</div>
+                    <div class="insights-persona-title" id="personalityTitle">Loading…</div>
+                    <div class="insights-persona-tagline" id="personalityTagline"></div>
+                    <p id="personalityDesc" style="font-size: 13px; color: var(--text-muted); margin-top: 10px; line-height: 1.6;"></p>
+                    <div id="personalityMeta" class="insights-persona-meta"></div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3 style="font-size: 15px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;"><span data-icon="PieChart"></span> Category Heatmap</h3>
+                    <div id="heatmapContainer" style="display: flex; flex-direction: column; gap: 14px;">
+                        <p style="color: var(--text-muted); font-size: 13px;">Loading heatmap…</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: Overrun prediction + Financial Health -->
+            <div class="insights-section-title"><span data-icon="Target"></span> Budget Overrun Prediction &amp; Financial Health</div>
+
+            <div class="grid-cards insights-grid" style="grid-template-columns: 1.4fr 1fr;">
+                <div class="dashboard-card">
+                    <h3 style="font-size: 15px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;"><span data-icon="TrendingUp"></span> End-of-Month Prediction</h3>
+                    <div id="overrunStatus" class="insights-status-pill">Loading…</div>
+                    <p id="overrunMessage" style="font-size: 14px; margin-top: 14px; line-height: 1.6;">Analyzing your pace…</p>
+                    <div class="insights-metric-strip" style="margin-top: 18px;">
+                        <div class="insights-metric">
+                            <div class="insights-metric-label">TOTAL BUDGET</div>
+                            <div class="insights-metric-value" id="overrunBudget">₹0</div>
+                        </div>
+                        <div class="insights-metric">
+                            <div class="insights-metric-label">PROJECTED SPEND</div>
+                            <div class="insights-metric-value" id="overrunProjected">₹0</div>
+                        </div>
+                        <div class="insights-metric">
+                            <div class="insights-metric-label">PROJECTED DELTA</div>
+                            <div class="insights-metric-value" id="overrunDelta">₹0</div>
+                        </div>
+                    </div>
+                    <div id="overrunCats" style="margin-top: 16px; display: flex; flex-direction: column; gap: 10px;"></div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3 style="font-size: 15px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span data-icon="HeartPulse"></span> Financial Health Score</h3>
+                    <div class="insights-gauge-wrap">
+                        <div class="insights-gauge">
+                            <canvas id="healthGaugeCanvas" width="180" height="180"></canvas>
+                            <div class="insights-gauge-center">
+                                <div id="healthScoreNumber" style="font-size: 34px; font-weight: 800;">--</div>
+                                <div id="healthScoreStatus" class="score-badge" style="margin-top: 6px;">…</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                        Savings rate <span id="healthSavingsRate" style="font-weight: 700; color: var(--accent-green);">0%</span>
+                    </div>
+                    <div id="healthBreakdownList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: Spending Speed Tracker -->
+            <div class="insights-section-title"><span data-icon="Flame"></span> Spending Speed Tracker</div>
+
+            <div class="dashboard-card">
+                <div class="insights-metric-strip" style="flex-wrap: wrap;">
+                    <div class="insights-metric">
+                        <div class="insights-metric-label">THIS WEEK <span style="color: var(--accent-cyan);">(7 DAYS)</span></div>
+                        <div class="insights-metric-value" id="paceThisWeek">₹0/day</div>
+                    </div>
+                    <div class="insights-metric">
+                        <div class="insights-metric-label">LAST WEEK</div>
+                        <div class="insights-metric-value" id="paceLastWeek">₹0/day</div>
+                    </div>
+                    <div class="insights-metric">
+                        <div class="insights-metric-label">CHANGE</div>
+                        <div class="insights-metric-value" id="paceChange">--</div>
+                    </div>
+                    <div class="insights-metric" style="flex: 2; min-width: 220px;">
+                        <div class="insights-metric-label">HIGHEST SPEND DAYS</div>
+                        <div id="paceTopDays" style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;"></div>
+                    </div>
+                </div>
+                <div id="paceInsights" style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+
+            <!-- SECTION 4: Spending Highlights + Flagged Expenses -->
+            <div class="insights-section-title"><span data-icon="Trophy"></span> Spending Highlights &amp; Flagged Expenses</div>
+
+            <div class="grid-cards insights-grid">
+                <div class="dashboard-card">
+                    <h3 style="font-size: 15px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;"><span data-icon="Trophy"></span> Spending Highlights</h3>
+                    <div id="highlightsContainer" style="display: flex; flex-direction: column; gap: 12px;">
+                        <p style="color: var(--text-muted); font-size: 13px;">Loading highlights…</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="font-size: 15px; display: flex; align-items: center; gap: 8px;"><span data-icon="AlertTriangle"></span> Flagged Expenses</h3>
+                        <span id="flaggedBadge" class="insights-flag-badge"><span data-icon="Bell"></span> 0 flagged</span>
+                    </div>
+                    <div id="flaggedList" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;"></div>
+                    <button id="showMoreBtn" class="btn btn-ghost btn-sm" style="width: 100%; margin-top: 14px; display: none;"><span data-icon="ChevronDown"></span> <span id="showMoreLabel">Show more</span></button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Off-screen container rendered to PDF by the Download Report button -->
+    <div id="pdfReportWrap" aria-hidden="true" style="position:absolute; left:-10000px; top:0; width:794px;">
+        <div id="pdfReport"></div>
+    </div>
+
+    <script src="js/icons.js"></script>
+    <script src="js/api.js"></script>
+    <script src="vendor/html2pdf.bundle.min.js"></script>
+    <script src="js/insights.js"></script>
+</body>
+</html>

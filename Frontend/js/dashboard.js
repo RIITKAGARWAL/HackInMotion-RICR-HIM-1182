@@ -25,11 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedCategoryId: null,
     currentTxType: 'expense',
     calcExpression: '0',
+    editTxId: null,
+    editAccountId: null,
+    editCategoryId: null,
+    editTxType: 'expense',
+    categoryPickerFor: 'add',
     accounts: [],
     categories: [],
     budgets: [],
     transactions: [],
     charts: {},
+    csvMode: 'replace',
     confirmAction: null
   };
 
@@ -124,17 +130,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ---------- Auth & navigation ----------
-  $('userNameDisplay').textContent = user.name || 'User';
+  const displayName = user.name || 'User';
+  $('userNameDisplay').textContent = displayName;
   $('brandBadge').innerHTML = SpenIcons.icon('Wallet');
+  const mobileUserName = $('mobileUserName');
+  if (mobileUserName) mobileUserName.textContent = displayName;
+  const drawerWorkspaceName = $('drawerWorkspaceName');
+  if (drawerWorkspaceName) drawerWorkspaceName.textContent = `${displayName}'s Workspace`;
 
-  const logoutBtn = $('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('spensight_token');
-      localStorage.removeItem('spensight_user');
-      window.location.href = 'login.html';
-    });
+  function handleLogout() {
+    localStorage.removeItem('spensight_token');
+    localStorage.removeItem('spensight_user');
+    window.location.href = 'login.html';
   }
+  ['logoutBtn', 'logoutBtnDrawer'].forEach((id) => {
+    const btn = $(id);
+    if (btn) btn.addEventListener('click', handleLogout);
+  });
 
   const monthPicker = $('monthPicker');
   if (monthPicker) monthPicker.value = state.monthYear;
@@ -160,22 +172,41 @@ document.addEventListener('DOMContentLoaded', () => {
       aiView: 'Cleo AI Copilot'
     };
     if (pageTitle) pageTitle.textContent = labels[viewId] || 'Dashboard';
+    // Hide the global FAB in the Cleo view so it never overlaps the chat
+    // input deck; reclaim its bottom spacing for the chat on mobile.
+    const isAiView = viewId === 'aiView';
+    const fab = document.getElementById('floatingAddBtn');
+    if (fab) fab.style.display = isAiView ? 'none' : 'flex';
+    document.body.classList.toggle('ai-active', isAiView);
     closeSidebar();
     refreshActiveViewData(viewId);
   }
 
   navItems.forEach((item) => {
-    item.addEventListener('click', () => setActiveView(item.getAttribute('data-target')));
+    item.addEventListener('click', () => {
+      const target = item.getAttribute('data-target');
+      if (target) setActiveView(target);
+    });
   });
 
-  // Mobile sidebar
+  // Mobile sidebar / drawer
   const sidebar = $('sidebar');
+  const backdrop = $('sidebarBackdrop');
   const hamburger = $('hamburgerBtn');
+  const mobileHamburger = $('mobileHamburgerBtn');
   const sidebarClose = $('sidebarCloseBtn');
-  function openSidebar() { if (sidebar) sidebar.classList.add('open'); }
-  function closeSidebar() { if (sidebar) sidebar.classList.remove('open'); }
+  function openSidebar() {
+    if (sidebar) sidebar.classList.add('open');
+    if (backdrop) backdrop.classList.add('active');
+  }
+  function closeSidebar() {
+    if (sidebar) sidebar.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('active');
+  }
+  if (mobileHamburger) mobileHamburger.addEventListener('click', openSidebar);
   if (hamburger) hamburger.addEventListener('click', openSidebar);
   if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+  if (backdrop) backdrop.addEventListener('click', closeSidebar);
 
   function refreshActiveViewData(viewId = getActiveViewId()) {
     // Contextual time-filter: only show range chips / month picker / options on
@@ -467,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadAllTransactions() {
     const tbody = $('allTransactionsTable');
     if (!tbody) return;
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading ledger...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading ledger...</td></tr>`;
 
     try {
       const txnRes = await apiRequest(`/transactions?${filterQuery()}`, 'GET', null, true);
@@ -475,7 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state.transactions = txs;
       renderTransactionTable(tbody, txs);
     } catch (error) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--accent-red);">Error loading ledger transactions.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--accent-red);">Error loading ledger transactions.</td></tr>';
     }
   }
 
@@ -484,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tbody.innerHTML = '';
 
     if (!txs || txs.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span data-icon="Receipt"></span><p style="font-size: 13px;">No transactions yet. Tap the + button to add your first entry.</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><span data-icon="Receipt"></span><p style="font-size: 13px;">No transactions yet. Tap the + button to add your first entry.</p></div></td></tr>`;
       hydrateIcons(tbody);
       return;
     }
@@ -502,7 +533,12 @@ document.addEventListener('DOMContentLoaded', () => {
         <td><span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(59,130,246,0.12); color: #3b82f6; padding: 4px 10px; border-radius: 20px; font-size: 12px;"><span data-icon="${txn.category_icon || 'Tag'}"></span> ${escapeHtml(txn.category_name || 'General')}</span></td>
         <td style="color: var(--text-muted); font-size: 13px;">${escapeHtml(txn.account_name || 'Cash')}${isTransfer && txn.to_account_name ? ` → ${escapeHtml(txn.to_account_name)}` : ''}</td>
         <td class="${amountClass}">${amountPrefix}${money(txn.amount)}</td>
-        <td><button class="btn btn-danger btn-sm delete-txn-btn" data-id="${txn.id}" style="width: auto; padding: 6px 10px;"><span data-icon="Trash2"></span></button></td>
+        <td>
+          <div class="txn-actions">
+            <button class="btn btn-ghost btn-sm edit-txn-btn" data-id="${txn.id}" style="width: auto; padding: 6px 10px;"><span data-icon="Pencil"></span></button>
+            <button class="btn btn-danger btn-sm delete-txn-btn" data-id="${txn.id}" style="width: auto; padding: 6px 10px;"><span data-icon="Trash2"></span></button>
+          </div>
+        </td>
       `;
       tbody.appendChild(tr);
     });
@@ -523,6 +559,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
     });
+
+    tbody.querySelectorAll('.edit-txn-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.getAttribute('data-id'), 10);
+        const txn = (state.transactions || []).find((t) => t.id === id);
+        if (txn) openEditTxnModal(txn);
+      });
+    });
   }
 
   // ---------- Confirm modal ----------
@@ -541,6 +585,113 @@ document.addEventListener('DOMContentLoaded', () => {
     state.confirmAction = null;
     if (action) await action();
   });
+
+  // ---------- Edit Transaction modal ----------
+  const editTxnModal = $('editTxnModal');
+
+  function toDateInputValue(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso ? String(iso).substring(0, 10) : '';
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  }
+
+  function resetEditTxn() {
+    state.editTxId = null;
+    state.editAccountId = null;
+    state.editCategoryId = null;
+    state.editTxType = 'expense';
+    if ($('editAmountInput')) $('editAmountInput').value = '';
+    if ($('editDateInput')) $('editDateInput').value = toDateInputValue(new Date().toISOString());
+    if ($('editNotesInput')) $('editNotesInput').value = '';
+    if ($('editAccountLabel')) $('editAccountLabel').textContent = 'Select Account';
+    if ($('editCategoryLabel')) $('editCategoryLabel').textContent = 'Select Category';
+    document.querySelectorAll('#editTxnModal .type-tab').forEach((t) => {
+      t.classList.toggle('active', t.getAttribute('data-edittype') === 'expense');
+    });
+    if ($('editPickerCategoryBtn')) $('editPickerCategoryBtn').style.display = 'flex';
+  }
+
+  function openEditTxnModal(txn) {
+    if (!editTxnModal) return;
+    state.editTxId = txn.id;
+    state.editAccountId = txn.account_id || null;
+    state.editCategoryId = txn.category_id || null;
+    state.editTxType = txn.type || 'expense';
+
+    if ($('editAmountInput')) $('editAmountInput').value = txn.amount;
+    if ($('editDateInput')) $('editDateInput').value = toDateInputValue(txn.transaction_date);
+    if ($('editNotesInput')) $('editNotesInput').value = txn.description || '';
+    if ($('editAccountLabel')) $('editAccountLabel').textContent = txn.account_name || 'Select Account';
+    if ($('editCategoryLabel')) {
+      $('editCategoryLabel').textContent = state.editCategoryId && txn.category_name ? txn.category_name : 'Select Category';
+    }
+
+    document.querySelectorAll('#editTxnModal .type-tab').forEach((t) => {
+      t.classList.toggle('active', t.getAttribute('data-edittype') === state.editTxType);
+    });
+    const isTransfer = state.editTxType === 'transfer';
+    if ($('editPickerCategoryBtn')) $('editPickerCategoryBtn').style.display = isTransfer ? 'none' : 'flex';
+    if ($('editPickerAccountBtn')) $('editPickerAccountBtn').style.flex = '1';
+
+    editTxnModal.classList.add('active');
+  }
+
+  const closeEditTxnBtn = $('closeEditTxnBtn');
+  if (closeEditTxnBtn) closeEditTxnBtn.addEventListener('click', () => {
+    if (editTxnModal) editTxnModal.classList.remove('active');
+    resetEditTxn();
+  });
+
+  document.querySelectorAll('#editTxnModal .type-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#editTxnModal .type-tab').forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      state.editTxType = tab.getAttribute('data-edittype');
+      const isTransfer = state.editTxType === 'transfer';
+      if (isTransfer) {
+        state.editCategoryId = null;
+        if ($('editCategoryLabel')) $('editCategoryLabel').textContent = 'Select Category';
+      }
+      if ($('editPickerCategoryBtn')) $('editPickerCategoryBtn').style.display = isTransfer ? 'none' : 'flex';
+    });
+  });
+
+  const saveEditTxnBtn = $('saveEditTxnBtn');
+  if (saveEditTxnBtn) {
+    saveEditTxnBtn.addEventListener('click', async () => {
+      try {
+        const amount = parseFloat($('editAmountInput').value);
+        if (isNaN(amount) || amount <= 0) {
+          showToast('Please enter a valid amount greater than 0.', 'error');
+          return;
+        }
+        const date = $('editDateInput').value;
+        const payload = {
+          amount,
+          type: state.editTxType,
+          account_id: state.editAccountId,
+          category_id: state.editTxType === 'transfer' ? null : state.editCategoryId,
+          description: $('editNotesInput') ? $('editNotesInput').value.trim() : '',
+          notes: $('editNotesInput') ? $('editNotesInput').value.trim() : '',
+          date: date ? new Date(date).toISOString() : undefined
+        };
+
+        saveEditTxnBtn.disabled = true;
+        await apiRequest(`/transactions/${state.editTxId}`, 'PUT', payload, true);
+        saveEditTxnBtn.disabled = false;
+
+        showToast('Transaction updated.');
+        editTxnModal.classList.remove('active');
+        resetEditTxn();
+        refreshActiveViewData();
+      } catch (err) {
+        saveEditTxnBtn.disabled = false;
+        showToast(err.message || 'Failed to update transaction.', 'error');
+      }
+    });
+  }
 
   // ---------- 4. Budgets ----------
   async function loadBudgetsData() {
@@ -589,6 +740,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="budget-card-actions">
               <span class="budget-card-amount" style="color: ${isOver ? '#ef4444' : isWarn ? '#f59e0b' : '#10b981'};">${money(spent)} / ${money(limit)}</span>
               <span class="budget-static-badge"><span data-icon="Lock"></span> Budget set</span>
+            </div>
+            <div class="budget-inline-actions">
+              <button class="btn btn-ghost btn-sm edit-budget-btn" data-id="${b.budget_id}" data-name="${escapeHtml(b.category_name)}" data-limit="${limit}"><span data-icon="Pencil"></span> Edit</button>
+              <button class="btn btn-danger btn-sm remove-budget-btn" data-id="${b.budget_id}" data-name="${escapeHtml(b.category_name)}"><span data-icon="Trash2"></span> Remove</button>
             </div>
           `;
           budgetedContainer.appendChild(div);
@@ -643,6 +798,47 @@ document.addEventListener('DOMContentLoaded', () => {
               loadBudgetsData();
             })
             .catch((err) => showToast(err.message || 'Failed to save budget.', 'error'));
+        });
+      });
+
+      document.querySelectorAll('.edit-budget-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          const catName = btn.getAttribute('data-name');
+          const currentLimit = btn.getAttribute('data-limit');
+          if (!id) return;
+
+          const input = window.prompt(`Update monthly budget limit for ${catName} (${CURRENCY}):`, currentLimit);
+          if (input === null) return;
+          const limit = parseFloat(input);
+          if (isNaN(limit) || limit <= 0) {
+            showToast('Please enter a valid positive number.', 'error');
+            return;
+          }
+          apiRequest(`/budgets/${id}`, 'PUT', { limit_amount: limit }, true)
+            .then(() => {
+              showToast(`Budget updated for ${catName}.`);
+              loadBudgetsData();
+            })
+            .catch((err) => showToast(err.message || 'Failed to update budget.', 'error'));
+        });
+      });
+
+      document.querySelectorAll('.remove-budget-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          const catName = btn.getAttribute('data-name');
+          if (!id) return;
+
+          openConfirm(`Remove the budget for ${catName}? It will move back to "Not Budgeted This Month".`, async () => {
+            try {
+              await apiRequest(`/budgets/${id}`, 'DELETE', null, true);
+              showToast(`Budget removed for ${catName}.`);
+              loadBudgetsData();
+            } catch (err) {
+              showToast(err.message || 'Failed to remove budget.', 'error');
+            }
+          });
         });
       });
     } catch (e) {
@@ -901,6 +1097,10 @@ document.addEventListener('DOMContentLoaded', () => {
           state.selectedAccountId = acc.id;
           const label = $('selectedAccountLabel');
           if (label) label.textContent = acc.name;
+        } else if (pickerMode === 'edit-source') {
+          state.editAccountId = acc.id;
+          const label = $('editAccountLabel');
+          if (label) label.textContent = acc.name;
         } else {
           state.selectedToAccountId = acc.id;
           const label = $('selectedToAccountLabel');
@@ -918,55 +1118,75 @@ document.addEventListener('DOMContentLoaded', () => {
     $('closeAccountModalBtn').addEventListener('click', () => accountModal.classList.remove('active'));
   }
 
+  const editPickerAccountBtn = $('editPickerAccountBtn');
+  if (editPickerAccountBtn && accountModal) {
+    editPickerAccountBtn.addEventListener('click', () => openAccountPicker('edit-source'));
+  }
+
   if (pickerToAccountBtn) {
     pickerToAccountBtn.addEventListener('click', () => openAccountPicker('destination'));
   }
 
-  if (pickerCategoryBtn && categoryModal) {
-    pickerCategoryBtn.addEventListener('click', async () => {
-      const container = $('categoryPickerContainer');
-      container.innerHTML = '<p style="color: #94a3b8; font-size: 13px;">Loading categories...</p>';
-      categoryModal.classList.add('active');
+  async function openCategoryPicker(forMode) {
+    const container = $('categoryPickerContainer');
+    if (!container || !categoryModal) return;
+    state.categoryPickerFor = forMode === 'edit' ? 'edit' : 'add';
+    container.innerHTML = '<p style="color: #94a3b8; font-size: 13px;">Loading categories...</p>';
+    categoryModal.classList.add('active');
 
-      try {
-        const categories = state.categories.length
-          ? state.categories
-          : (await apiRequest('/categories', 'GET', null, true)).filter((c) => !isEdgeCategory(c.name));
+    try {
+      const categories = state.categories.length
+        ? state.categories
+        : (await apiRequest('/categories', 'GET', null, true)).filter((c) => !isEdgeCategory(c.name));
 
-        container.innerHTML = '';
-        const filtered = state.currentTxType === 'income'
-          ? categories.filter((c) => c.type === 'income')
-          : categories.filter((c) => c.type === 'expense');
+      container.innerHTML = '';
+      const txType = state.categoryPickerFor === 'edit' ? state.editTxType : state.currentTxType;
+      const filtered = txType === 'income'
+        ? categories.filter((c) => c.type === 'income')
+        : categories.filter((c) => c.type === 'expense');
 
-        if (filtered.length === 0) {
-          container.innerHTML = '<p style="color: #94a3b8; font-size: 13px; grid-column: 1 / -1;">No matching categories. Add one from the Categories view.</p>';
-          return;
-        }
+      if (filtered.length === 0) {
+        container.innerHTML = '<p style="color: #94a3b8; font-size: 13px; grid-column: 1 / -1;">No matching categories. Add one from the Categories view.</p>';
+        return;
+      }
 
-        filtered.forEach((cat) => {
-          const div = document.createElement('div');
-          div.className = 'category-icon-card';
-          div.innerHTML = `
-            <div class="category-circle-icon" style="background: ${cat.color_code || '#3b82f6'}22; color: ${cat.color_code || '#3b82f6'};">
-              <span data-icon="${cat.icon_name || 'Tag'}"></span>
-            </div>
-            <span style="font-size: 12px; font-weight: 600;">${escapeHtml(cat.name)}</span>
-          `;
-          div.addEventListener('click', () => {
+      filtered.forEach((cat) => {
+        const div = document.createElement('div');
+        div.className = 'category-icon-card';
+        div.innerHTML = `
+          <div class="category-circle-icon" style="background: ${cat.color_code || '#3b82f6'}22; color: ${cat.color_code || '#3b82f6'};">
+            <span data-icon="${cat.icon_name || 'Tag'}"></span>
+          </div>
+          <span style="font-size: 12px; font-weight: 600;">${escapeHtml(cat.name)}</span>
+        `;
+        div.addEventListener('click', () => {
+          if (state.categoryPickerFor === 'edit') {
+            state.editCategoryId = cat.id;
+            const label = $('editCategoryLabel');
+            if (label) label.textContent = cat.name;
+          } else {
             state.selectedCategoryId = cat.id;
             const label = $('selectedCategoryLabel');
             if (label) label.textContent = cat.name;
-            categoryModal.classList.remove('active');
-          });
-          container.appendChild(div);
+          }
+          categoryModal.classList.remove('active');
         });
-        hydrateIcons(container);
-      } catch (e) {
-        container.innerHTML = '<p style="color: var(--accent-red); font-size: 13px;">Failed to load categories.</p>';
-      }
-    });
+        container.appendChild(div);
+      });
+      hydrateIcons(container);
+    } catch (e) {
+      container.innerHTML = '<p style="color: var(--accent-red); font-size: 13px;">Failed to load categories.</p>';
+    }
+  }
 
+  if (pickerCategoryBtn && categoryModal) {
+    pickerCategoryBtn.addEventListener('click', () => openCategoryPicker('add'));
     $('closeCategoryModalBtn').addEventListener('click', () => categoryModal.classList.remove('active'));
+  }
+
+  const editPickerCategoryBtn = $('editPickerCategoryBtn');
+  if (editPickerCategoryBtn && categoryModal) {
+    editPickerCategoryBtn.addEventListener('click', () => openCategoryPicker('edit'));
   }
 
   // ---------- 8. Calculator & Quick-add ----------
@@ -1201,6 +1421,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------- 10. CSV Upload ----------
   const dropzone = $('dropzone');
   const csvFileInput = $('csvFileInput');
+  const updateStatementBtn = $('updateStatementBtn');
+  const clearCsvBtn = $('clearCsvBtn');
+  const csvModeHint = $('csvModeHint');
 
   async function handleCsvFile(file) {
     if (!file) return;
@@ -1209,9 +1432,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       if (statusParagraph) statusParagraph.textContent = 'Uploading and auto-categorizing transactions...';
-      const result = await apiUpload('/transactions/upload-csv', file);
+      const result = await apiUpload('/transactions/upload-csv', file, 'statement', { mode: state.csvMode });
       showToast(result.message || 'Bank statement uploaded! Processing in background.', 'info');
-      setTimeout(() => refreshActiveViewData(), 3500);
+      setTimeout(() => refreshActiveViewData(), 500);
     } catch (error) {
       showToast(error.message || 'CSV upload failed.', 'error');
     } finally {
@@ -1219,6 +1442,41 @@ document.addEventListener('DOMContentLoaded', () => {
       if (csvFileInput) csvFileInput.value = '';
     }
   }
+
+  async function doClearCsv() {
+    try {
+      const result = await apiRequest('/transactions/imported-csv', 'DELETE', null, true);
+      showToast((result && result.message) || 'Imported CSV data successfully cleared.', 'success');
+      refreshActiveViewData();
+    } catch (error) {
+      showToast(error.message || 'Failed to clear imported CSV data.', 'error');
+    }
+  }
+
+  if (updateStatementBtn) {
+    updateStatementBtn.addEventListener('click', () => {
+      if (csvFileInput) csvFileInput.click();
+    });
+  }
+
+  if (clearCsvBtn) {
+    clearCsvBtn.addEventListener('click', () => {
+      openConfirm('Are you sure you want to delete all transactions imported from the CSV statement? Manual transactions will remain untouched.', doClearCsv);
+    });
+  }
+
+  const csvModeButtons = document.querySelectorAll('.csv-mode-btn');
+  csvModeButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.csvMode = btn.getAttribute('data-csv-mode');
+      csvModeButtons.forEach((b) => b.classList.toggle('active', b === btn));
+      if (csvModeHint) {
+        csvModeHint.textContent = state.csvMode === 'replace'
+          ? 'Replace: previously imported CSV data will be removed before importing.'
+          : 'Merge: duplicates (by date, description and amount) will be skipped.';
+      }
+    });
+  });
 
   if (dropzone && csvFileInput) {
     dropzone.addEventListener('click', () => csvFileInput.click());
@@ -1237,7 +1495,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ---------- 11. Range filtering & display options ----------
+  // ---------- 11. Range filtering ----------
   const rangeChips = $('rangeChips');
   if (rangeChips) {
     rangeChips.querySelectorAll('.range-chip').forEach((chip) => {
@@ -1248,38 +1506,8 @@ document.addEventListener('DOMContentLoaded', () => {
           c.classList.toggle('active', isActive);
           c.classList.toggle('active-filter', isActive);
         });
-        syncRadioButtons();
         refreshActiveViewData();
       });
-    });
-  }
-
-  function syncRadioButtons() {
-    document.querySelectorAll('input[name="viewMode"]').forEach((radio) => {
-      radio.checked = radio.value === state.range;
-    });
-  }
-
-  const displayOptionsBtn = $('displayOptionsBtn');
-  const displayOptionsModal = $('displayOptionsModal');
-  if (displayOptionsBtn && displayOptionsModal) {
-    displayOptionsBtn.addEventListener('click', () => {
-      syncRadioButtons();
-      displayOptionsModal.classList.add('active');
-    });
-    $('closeDisplayOptionsBtn').addEventListener('click', () => displayOptionsModal.classList.remove('active'));
-    $('applyDisplayOptionsBtn').addEventListener('click', () => {
-      const checked = document.querySelector('input[name="viewMode"]:checked');
-      if (checked) {
-        state.range = checked.value;
-        rangeChips.querySelectorAll('.range-chip').forEach((c) => {
-          const isActive = c.getAttribute('data-range') === state.range;
-          c.classList.toggle('active', isActive);
-          c.classList.toggle('active-filter', isActive);
-        });
-      }
-      displayOptionsModal.classList.remove('active');
-      refreshActiveViewData();
     });
   }
 

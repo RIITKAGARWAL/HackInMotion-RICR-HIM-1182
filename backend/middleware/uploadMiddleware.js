@@ -1,5 +1,4 @@
 const multer = require('multer');
-const path = require('path');
 const fs = require('fs');
 
 // Ensure uploads directory exists on launch

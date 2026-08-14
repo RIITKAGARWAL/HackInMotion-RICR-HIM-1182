@@ -27,12 +27,14 @@ app.use('/api/budgets', require('./routes/budgetRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/accounts', require('./routes/accountRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/insights', require('./routes/insightsRoutes'));
 
 // Static HTML Page Fallbacks
 app.get('/', (req, res) => res.sendFile(path.join(ROOT_DIR, 'Frontend/index.html')));
 app.get('/login.html', (req, res) => res.sendFile(path.join(ROOT_DIR, 'Frontend/login.html')));
 app.get('/register.html', (req, res) => res.sendFile(path.join(ROOT_DIR, 'Frontend/register.html')));
 app.get('/dashboard.html', (req, res) => res.sendFile(path.join(ROOT_DIR, 'Frontend/dashboard.html')));
+app.get('/insights.html', (req, res) => res.sendFile(path.join(ROOT_DIR, 'Frontend/insights.html')));
 app.get('/categories.html', (req, res) => res.sendFile(path.join(ROOT_DIR, 'Frontend/categories.html')));
 app.get('/subscriptions.html', (req, res) => res.sendFile(path.join(ROOT_DIR, 'Frontend/subscriptions.html')));
 

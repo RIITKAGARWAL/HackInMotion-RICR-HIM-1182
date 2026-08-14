@@ -87,7 +87,9 @@ const SpenIcons = (() => {
     'Megaphone': '<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
     'Search': '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
     'Copy': '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-    'CircleCheck': '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>'
+    'CircleCheck': '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+    'ChevronDown': '<polyline points="6 9 12 15 18 9"/>',
+    'ChevronUp': '<polyline points="6 15 12 9 18 15"/>'
   };
 
   const SVG_ATTRS = 'xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';

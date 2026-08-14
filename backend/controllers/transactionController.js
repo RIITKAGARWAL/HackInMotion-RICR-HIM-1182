@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { enqueueCsvFile } = require('../queues/csvQueue');
+const { processCsvFile, removeImportedForUser } = require('../services/csvImportService');
 const { invalidateUserCache } = require('../services/cacheService');
 const analytics = require('../services/analyticsService');
 
@@ -212,19 +212,60 @@ const deleteTransaction = async (req, res) => {
 };
 
 const uploadCsv = async (req, res) => {
+  const fs = require('fs');
+  // Accept a file under either 'statement' or 'file' so a mismatched
+  // multer field name never surfaces as an "Unexpected field" error.
+  const uploaded = Object.values(req.files || {}).flat().map((f) => f.path);
+  const cleanup = () => uploaded.forEach((p) => { if (fs.existsSync(p)) fs.unlinkSync(p); });
   try {
-    if (!req.file) {
+    const filePath = uploaded[0];
+    if (!filePath) {
       return res.status(400).json({ error: 'No CSV file uploaded.' });
     }
 
-    const jobId = await enqueueCsvFile(req.user.id, req.file.path);
-    return res.status(202).json({
-      message: 'File upload accepted. Processing in background.',
-      jobId
+    // 'replace' wipes prior CSV imports first; 'merge' (default) skips duplicates
+    const mode = req.body && req.body.mode === 'replace' ? 'replace' : 'merge';
+    const result = await processCsvFile(req.user.id, filePath, mode);
+    cleanup();
+
+    let message;
+    if (result.count > 0) {
+      message = `${result.count} transaction${result.count === 1 ? '' : 's'} imported and auto-categorized.`;
+      if (result.skipped > 0) {
+        message += ` ${result.skipped} duplicate${result.skipped === 1 ? '' : 's'} skipped.`;
+      }
+    } else if (result.skipped > 0) {
+      message = `No new transactions — all ${result.skipped} row${result.skipped === 1 ? '' : 's'} were duplicates.`;
+    } else {
+      message = 'No valid rows found in the uploaded file.';
+    }
+
+    return res.status(200).json({
+      message,
+      count: result.count,
+      skipped: result.skipped,
+      categoryIds: result.categoryIds
     });
   } catch (error) {
+    cleanup();
     console.error('Upload CSV Error:', error);
-    return res.status(500).json({ error: 'Failed to queue transaction file.' });
+    return res.status(500).json({ error: 'Failed to process transaction file.' });
+  }
+};
+
+// Delete all transactions imported from CSV statements, leaving manual
+// transactions untouched. Reverses the balance impact per account.
+const deleteImportedCsv = async (req, res) => {
+  try {
+    const removed = await removeImportedForUser(req.user.id);
+    await invalidateUserCache(req.user.id);
+    return res.status(200).json({
+      message: 'Imported CSV data successfully cleared.',
+      count: removed
+    });
+  } catch (error) {
+    console.error('Clear Imported CSV Error:', error);
+    return res.status(500).json({ error: 'Failed to clear imported CSV data.' });
   }
 };
 
@@ -308,11 +349,46 @@ const getSummary = async (req, res) => {
   }
 };
 
+// Month-aware expense breakdown grouped by category for the dashboard doughnut
+const getCategoryBreakdown = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const monthYear = req.query.month_year || new Date().toISOString().substring(0, 7);
+
+    const sql = `
+      SELECT
+        COALESCE(c.name, 'Uncategorized') AS category_name,
+        COALESCE(c.color_code, '#6B7280') AS color_code,
+        COALESCE(SUM(t.amount), 0) AS total_amount
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.user_id = $1
+        AND t.type = 'expense'
+        AND TO_CHAR(t.date, 'YYYY-MM') = $2
+      GROUP BY c.name, c.color_code
+      ORDER BY total_amount DESC
+    `;
+    const result = await db.query(sql, [userId, monthYear]);
+    const palette = ['#3b82f6', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#22c55e', '#f97316', '#84cc16', '#a855f7', '#e11d48', '#14b8a6', '#d946ef'];
+
+    return res.json(result.rows.map((r, i) => ({
+      category_name: r.category_name,
+      total_amount: parseFloat(r.total_amount || 0),
+      color_code: r.color_code && r.color_code !== '#6B7280' ? r.color_code : palette[i % palette.length]
+    })));
+  } catch (error) {
+    console.error('Category Breakdown Error:', error);
+    return res.status(500).json({ error: 'Failed to compute category breakdown.' });
+  }
+};
+
 module.exports = {
   createTransaction,
   updateTransaction,
   deleteTransaction,
   uploadCsv,
+  deleteImportedCsv,
   getTransactions,
-  getSummary
+  getSummary,
+  getCategoryBreakdown
 };

@@ -33,6 +33,8 @@ exports.parseBankCSV = (filePath) => {
 
         const rawDate = pick('Date', 'Txn Date', 'Transaction Date', 'Trans Date', 'Posting Date', 'Value Date');
         const rawDesc = pick('Description', 'Narration', 'Details', 'Merchant', 'Particulars', 'Transaction', 'Remarks', 'Memo');
+        const rawNotes = pick('Notes', 'Note');
+        const rawCategory = pick('Category', 'Categories');
         const rawAmount = pick('Amount', 'Txn Amount', 'Value', 'AMOUNT');
         const rawDebit = pick('Debit', 'Withdrawal', 'Withdrawals', 'Money Out', 'Paid Out', 'Dr');
         const rawCredit = pick('Credit', 'Deposit', 'Deposits', 'Money In', 'Paid In', 'Cr');
@@ -80,7 +82,8 @@ exports.parseBankCSV = (filePath) => {
 
         results.push({
           transaction_date: parsedDate.toISOString(),
-          description: (rawDesc || 'Bank Transaction').trim().substring(0, 255),
+          description: (rawNotes || rawDesc || 'Bank Transaction').trim().substring(0, 255),
+          category: rawCategory ? String(rawCategory).trim() : '',
           amount,
           is_debit: isDebit,
           type: isDebit ? 'expense' : 'income',

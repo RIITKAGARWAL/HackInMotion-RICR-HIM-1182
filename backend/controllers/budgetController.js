@@ -100,6 +100,59 @@ const createBudget = async (req, res) => {
   }
 };
 
+const updateBudget = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const budgetId = toInt(req.params.id);
+    if (!budgetId) {
+      return res.status(400).json({ error: 'Invalid budget id.' });
+    }
+
+    const limit = toFloat(req.body && req.body.limit_amount);
+    if (limit <= 0) {
+      return res.status(400).json({ error: 'Budget limit must be a positive number.' });
+    }
+
+    const result = await db.query(
+      'UPDATE budgets SET monthly_limit = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
+      [limit, budgetId, userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Budget not found.' });
+    }
+
+    await invalidateUserCache(userId);
+    return res.json({ message: 'Budget updated.', budget: result.rows[0] });
+  } catch (error) {
+    console.error('Update Budget Error:', error);
+    return res.status(500).json({ error: 'Failed to update budget.' });
+  }
+};
+
+const deleteBudget = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const budgetId = toInt(req.params.id);
+    if (!budgetId) {
+      return res.status(400).json({ error: 'Invalid budget id.' });
+    }
+
+    const result = await db.query(
+      'DELETE FROM budgets WHERE id = $1 AND user_id = $2 RETURNING id',
+      [budgetId, userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Budget not found.' });
+    }
+
+    await invalidateUserCache(userId);
+    return res.json({ message: 'Budget removed.' });
+  } catch (error) {
+    console.error('Delete Budget Error:', error);
+    return res.status(500).json({ error: 'Failed to remove budget.' });
+  }
+};
+
 const copyPastBudgets = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -161,6 +214,8 @@ const setCarryOver = async (req, res) => {
 module.exports = {
   getBudgets,
   createBudget,
+  updateBudget,
+  deleteBudget,
   copyPastBudgets,
   getCarryOver,
   setCarryOver

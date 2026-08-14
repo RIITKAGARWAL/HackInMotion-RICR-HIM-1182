@@ -88,7 +88,8 @@ exports.calculateHealthScore = async (userId, monthYear) => {
       userId, score, savingsRate.toFixed(2), monthYear, status
     ]);
 
-    return healthRes.rows[0];
+    const saved = healthRes.rows[0];
+    return { ...saved, totalIncome, totalExpense };
   } catch (error) {
     console.error('Calculate Health Score Error:', error);
     throw error;

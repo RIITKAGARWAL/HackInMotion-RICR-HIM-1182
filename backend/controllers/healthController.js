@@ -1,4 +1,3 @@
-const db = require('../config/db');
 const aiEngine = require('../services/aiEngine');
 
 const getHealthScore = async (req, res) => {
@@ -13,7 +12,12 @@ const getHealthScore = async (req, res) => {
         health_score: healthSummary.health_score,
         savings_rate: healthSummary.savings_rate,
         overall_status: healthSummary.overall_status
-      }
+      },
+      healthScore: Number(healthSummary.health_score) || 0,
+      savingsRatio: Number(healthSummary.savings_rate) || 0,
+      totalIncome: healthSummary.totalIncome || 0,
+      totalExpense: healthSummary.totalExpense || 0,
+      status: healthSummary.overall_status || 'Healthy'
     });
   } catch (error) {
     console.error('Get Health Score Error:', error);

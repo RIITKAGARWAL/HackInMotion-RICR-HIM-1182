@@ -2,11 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SpenSight - Login</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Fixed mobile top navbar (shown < 900px) -->
+    <header class="mobile-topbar mobile-topbar-simple" id="mobileTopbar">
+        <a class="mobile-brand" href="login.html" aria-label="SpenSight home">
+            <div class="brand-badge" id="mobileBrandBadge"><span data-icon="Wallet"></span></div>
+            <span class="mobile-brand-name">SpenSight</span>
+        </a>
+    </header>
     <div class="auth-layout">
         <div class="welcome-panel">
             <div class="brand-header">
@@ -43,15 +50,15 @@
 
                 <form id="loginForm" style="margin-top: 24px;">
                     <div style="margin-bottom: 16px;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Email Address</label>
+                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">User ID / Username</label>
                         <div style="position: relative;">
-                            <span data-icon="Mail" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted);"></span>
-                            <input type="email" id="email" class="input-field" placeholder="Enter your email" style="padding-left: 40px;" autocomplete="email" required>
+                            <span data-icon="User" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted);"></span>
+                            <input type="text" id="email" class="input-field" placeholder="Enter your email or user ID" style="padding-left: 40px;" autocomplete="username" inputmode="email" required>
                         </div>
                     </div>
 
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Password</label>
+                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Password / Passcode</label>
                         <div style="position: relative;">
                             <span data-icon="Lock" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted);"></span>
                             <input type="password" id="password" class="input-field" placeholder="Enter your password" style="padding-left: 40px;" autocomplete="current-password" required>
