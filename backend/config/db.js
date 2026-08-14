@@ -1,21 +1,38 @@
 const { Pool } = require('pg');
 
-// Local Postgres (pgAdmin, localhost:5432) fallbacks. Docker compose
-// overrides these via env vars (DB_HOST=postgres, DB_PASSWORD=secret,
-// DB_NAME=financial_dashboard), so the container still resolves correctly.
-const dbPool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  database: process.env.DB_NAME || 'spensight_db',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'Suraj@97',
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
+// Check if DATABASE_URL exists (set via Render / .env file)
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString && process.env.NODE_ENV === 'production') {
+  console.error('FATAL: DATABASE_URL environment variable is missing in production!');
+}
+
+const poolConfig = connectionString
+  ? {
+      connectionString: connectionString,
+      ssl: {
+        rejectUnauthorized: false, // Required for Neon cloud SSL
+      },
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    }
+  : {
+      // Local development fallback
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      database: process.env.DB_NAME || 'spensight_db',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    };
+
+const dbPool = new Pool(poolConfig);
 
 dbPool.on('connect', () => {
-  console.log('Connected to PostgreSQL Database');
+  console.log(`Connected to PostgreSQL Database (${connectionString ? 'Cloud/Neon' : 'Localhost'})`);
 });
 
 dbPool.on('error', (err) => {
