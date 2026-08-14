@@ -2354,3 +2354,46 @@ body.ai-active #aiView {
     flex: 0 0 auto !important; /* Keep buttons from shrinking or breaking lines */
   }
 }
+
+/* =========================================================
+   MOBILE HEADER & TOP CARD CLIPPING FIXES
+   ========================================================= */
+@media screen and (max-width: 900px) {
+
+  /* 1. Add top padding to the main container so the first card isn't hidden under header */
+  .dashboard-layout,
+  main,
+  .main-content {
+    padding-top: 80px !important; /* Prevents top card clipping */
+  }
+
+  /* 2. Fix Top Navigation Bar alignment and height */
+  .mobile-topbar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    height: 65px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 12px !important;
+    background: #0f172a; /* Keeps topbar background solid */
+  }
+
+  /* 3. Truncate long username in header so menu button has space */
+  .mobile-user-pill {
+    max-width: 140px !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* 4. Ensure top balance text inside the card fits cleanly without vertical cut-offs */
+  .balance-card,
+  div[class*="balance"] {
+    padding-top: 16px !important;
+    overflow: visible !important;
+  }
+}
