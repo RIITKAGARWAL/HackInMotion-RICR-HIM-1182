@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config/env');
 
 const register = async (req, res) => {
   try {
@@ -20,19 +21,15 @@ const register = async (req, res) => {
 
     const newUser = await db.query(
       'INSERT INTO users (name, email, password_hash, monthly_income) VALUES ($1, $2, $3, $4) RETURNING id, name, email',
-      [name || 'User', email, password_hash, parseFloat(monthly_income) || 0.00]
+      [name || 'User', email, password_hash, parseFloat(monthly_income) || 0.0]
     );
 
-    const token = jwt.sign(
-      { id: newUser.rows[0].id, email: newUser.rows[0].email },
-      process.env.JWT_SECRET || 'super_secret_jwt_key_hackathon_2026',
-      { expiresIn: '24h' }
-    );
+    const token = jwt.sign({ id: newUser.rows[0].id, email: newUser.rows[0].email }, JWT_SECRET, { expiresIn: '24h' });
 
     return res.status(201).json({
       message: 'User registered successfully.',
       token,
-      user: newUser.rows[0]
+      user: newUser.rows[0],
     });
   } catch (error) {
     console.error('Registration Error Details:', error);
@@ -55,15 +52,11 @@ const login = async (req, res) => {
       return res.status(400).json({ error: 'Invalid email or password.' });
     }
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET || 'super_secret_jwt_key_hackathon_2026',
-      { expiresIn: '24h' }
-    );
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
 
     return res.json({
       token,
-      user: { id: user.id, name: user.name, email: user.email }
+      user: { id: user.id, name: user.name, email: user.email },
     });
   } catch (error) {
     console.error('Login Error Details:', error);
@@ -73,5 +66,5 @@ const login = async (req, res) => {
 
 module.exports = {
   register,
-  login
+  login,
 };

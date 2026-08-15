@@ -49,8 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------- Formatters ----------
   function escapeHtml(str) {
     return String(str === undefined || str === null ? '' : str)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function money(n) {
@@ -126,7 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
       list.style.maxHeight = flaggedExpanded ? 'none' : '300px';
       const label = $('showMoreLabel');
       label.textContent = flaggedExpanded ? 'Show less' : 'Show more';
-      showMoreBtn.querySelector('[data-icon]').innerHTML = SpenIcons.icon(flaggedExpanded ? 'ChevronUp' : 'ChevronDown');
+      showMoreBtn.querySelector('[data-icon]').innerHTML = SpenIcons.icon(
+        flaggedExpanded ? 'ChevronUp' : 'ChevronDown'
+      );
     });
   }
 
@@ -135,7 +140,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorBox = $('insightsError');
     errorBox.style.display = 'none';
     try {
-      const data = await apiRequest(`/insights/overview?month_year=${encodeURIComponent(monthYear)}`, 'GET', null, true);
+      const data = await apiRequest(
+        `/insights/overview?month_year=${encodeURIComponent(monthYear)}`,
+        'GET',
+        null,
+        true
+      );
       currentData = data;
       renderAll(data);
     } catch (err) {
@@ -164,11 +174,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------- Banner ----------
   function renderBanner(data) {
     const s = data.summary || {};
-    const headline = s.expense > 0
-      ? `You've spent ${money(s.expense)} this month`
-      : 'Nothing recorded yet — this month is a blank canvas';
+    const headline =
+      s.expense > 0
+        ? `You've spent ${money(s.expense)} this month`
+        : 'Nothing recorded yet — this month is a blank canvas';
     $('bannerHeadline').textContent = headline;
-    $('bannerSubtitle').textContent = `Across ${s.transaction_count || 0} transactions, with ${money(s.income)} income and a ${s.savings_rate || 0}% savings rate.`;
+    $('bannerSubtitle').textContent =
+      `Across ${s.transaction_count || 0} transactions, with ${money(s.income)} income and a ${s.savings_rate || 0}% savings rate.`;
 
     const net = (s.income || 0) - (s.expense || 0);
     const netClass = net >= 0 ? 'insights-stat-green' : 'insights-stat-red';
@@ -195,15 +207,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ---------- Heatmap ----------
   function heatTag(status) {
-    return status === 'Over' ? 'insights-tag-red'
-      : status === 'Watch' ? 'insights-tag-amber'
-      : 'insights-tag-green';
+    return status === 'Over' ? 'insights-tag-red' : status === 'Watch' ? 'insights-tag-amber' : 'insights-tag-green';
   }
 
   function heatBarColor(status) {
-    return status === 'Over' ? 'var(--accent-red)'
-      : status === 'Watch' ? 'var(--accent-amber)'
-      : 'var(--accent-green)';
+    return status === 'Over' ? 'var(--accent-red)' : status === 'Watch' ? 'var(--accent-amber)' : 'var(--accent-green)';
   }
 
   function renderHeatmap(hm) {
@@ -215,21 +223,23 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    container.innerHTML = items.map((item) => {
-      const barWidth = item.pct === null ? 0 : Math.min(100, item.pct);
-      const limitText = item.budgeted ? `of ${money(item.limit)}` : 'no budget';
-      const spentText = item.spent > 0 ? money(item.spent) : '—';
-      return `
+    container.innerHTML = items
+      .map((item) => {
+        const barWidth = item.pct === null ? 0 : Math.min(100, item.pct);
+        const limitText = item.budgeted ? `of ${money(item.limit)}` : 'no budget';
+        const spentText = item.spent > 0 ? money(item.spent) : '—';
+        return `
         <div class="insights-heat-row">
           <div class="insights-heat-head">
-            <span class="insights-heat-dot" style="background: ${item.color_code};"></span>
+            <span class="insights-heat-dot" style="background: ${escapeHtml(item.color_code)};"></span>
             <span class="insights-heat-name">${escapeHtml(item.category_name)}</span>
-            <span class="${heatTag(item.status)}">${item.status}</span>
+            <span class="${heatTag(item.status)}">${escapeHtml(item.status)}</span>
           </div>
           <div class="insights-heat-bar-bg"><div class="insights-heat-bar-fill" style="width: ${barWidth}%; background: ${heatBarColor(item.status)};"></div></div>
           <div class="insights-heat-sub">${spentText} ${limitText}${item.pct !== null ? ` · ${item.pct}%` : ''}</div>
         </div>`;
-    }).join('');
+      })
+      .join('');
     hydrateIcons(container);
   }
 
@@ -264,14 +274,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!o.overrun_categories || o.overrun_categories.length === 0) {
       cats.innerHTML = '';
     } else {
-      cats.innerHTML = o.overrun_categories.map((c) => `
+      cats.innerHTML = o.overrun_categories
+        .map(
+          (c) => `
         <div class="insights-overrun-cat">
-          <span class="insights-heat-dot" style="background: ${c.color_code};"></span>
+          <span class="insights-heat-dot" style="background: ${escapeHtml(c.color_code)};"></span>
           <span class="insights-heat-name" style="flex: 1;">${escapeHtml(c.category_name)}</span>
           <span class="${c.projected_pct >= 100 ? 'insights-tag-red' : c.projected_pct >= 80 ? 'insights-tag-amber' : 'insights-tag-green'}">
             ${c.pct}% now → ${c.projected_pct}% projected
           </span>
-        </div>`).join('');
+        </div>`
+        )
+        .join('');
     }
   }
 
@@ -294,45 +308,52 @@ document.addEventListener('DOMContentLoaded', () => {
     $('healthSavingsRate').textContent = `${h.savings_rate || 0}%`;
 
     const color = healthColor(score);
-    if (gaugeChart) { gaugeChart.destroy(); gaugeChart = null; }
+    if (gaugeChart) {
+      gaugeChart.destroy();
+      gaugeChart = null;
+    }
     const ctx = $('healthGaugeCanvas');
     if (ctx && typeof Chart !== 'undefined') {
       gaugeChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          datasets: [{
-            data: [score, 100 - score],
-            backgroundColor: [color, 'rgba(255,255,255,0.06)'],
-            borderWidth: 0,
-            circumference: 360
-          }]
+          datasets: [
+            {
+              data: [score, 100 - score],
+              backgroundColor: [color, 'rgba(255,255,255,0.06)'],
+              borderWidth: 0,
+              circumference: 360,
+            },
+          ],
         },
         options: {
           responsive: false,
           cutout: '78%',
           rotation: -90,
-          plugins: { legend: { display: false }, tooltip: { enabled: false } }
-        }
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        },
       });
     }
 
     const list = $('healthBreakdownList');
-    const subs = (h.sub_scores || []).map((s) => `
+    const subs = (h.sub_scores || [])
+      .map(
+        (s) => `
       <div class="insights-subscore">
         <div class="insights-subscore-head">
           <span>${escapeHtml(s.label)}</span>
-          <span class="${healthTag(s.tag)}">${s.tag}</span>
+          <span class="${healthTag(s.tag)}">${escapeHtml(s.tag)}</span>
         </div>
         <div class="insights-heat-bar-bg"><div class="insights-heat-bar-fill" style="width: ${Math.min(100, s.score)}%; background: ${healthColor(s.score)};"></div></div>
         <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${s.score}/100</div>
-      </div>`).join('');
+      </div>`
+      )
+      .join('');
     list.innerHTML = subs || '<p style="color: var(--text-muted); font-size: 13px;">No breakdown available.</p>';
   }
 
   function healthTag(tag) {
-    return tag === 'Well' ? 'insights-tag-green'
-      : tag === 'Risk' ? 'insights-tag-red'
-      : 'insights-tag-amber';
+    return tag === 'Well' ? 'insights-tag-green' : tag === 'Risk' ? 'insights-tag-red' : 'insights-tag-amber';
   }
 
   // ---------- Pace tracker ----------
@@ -361,16 +382,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!pace.top_days || pace.top_days.length === 0) {
       topDays.innerHTML = '<span style="font-size: 12px; color: var(--text-muted);">No spend days yet</span>';
     } else {
-      topDays.innerHTML = pace.top_days.map((d, i) => `
+      topDays.innerHTML = pace.top_days
+        .map(
+          (d, i) => `
         <span class="insights-day-chip ${i === 0 ? 'insights-day-chip-top' : ''}">
           <span>${fmtDay(d.date)}</span>
           <strong>${money(d.amount)}</strong>
-        </span>`).join('');
+        </span>`
+        )
+        .join('');
     }
 
     const insights = $('paceInsights');
-    insights.innerHTML = (pace.insights || []).map((i) => `
-      <div class="insights-context-row"><span data-icon="Lightbulb" style="color: var(--accent-amber);"></span><span>${escapeHtml(i)}</span></div>`).join('');
+    insights.innerHTML = (pace.insights || [])
+      .map(
+        (i) => `
+      <div class="insights-context-row"><span data-icon="Lightbulb" style="color: var(--accent-amber);"></span><span>${escapeHtml(i)}</span></div>`
+      )
+      .join('');
     hydrateIcons(insights);
   }
 
@@ -450,9 +479,11 @@ document.addEventListener('DOMContentLoaded', () => {
       list.innerHTML = `<div class="empty-state" style="padding: 16px 0;"><span data-icon="CircleCheck"></span><p>Nothing flagged this month. Keep it up!</p></div>`;
       $('showMoreBtn').style.display = 'none';
     } else {
-      list.innerHTML = items.map((item) => `
+      list.innerHTML = items
+        .map(
+          (item) => `
         <div class="insights-flag-item">
-          <span class="insights-heat-dot" style="background: ${item.color_code};"></span>
+          <span class="insights-heat-dot" style="background: ${escapeHtml(item.color_code)};"></span>
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap;">
               <span style="font-weight: 700; font-size: 13px;">${escapeHtml(item.description || 'Transaction')}</span>
@@ -461,7 +492,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="font-size: 12px; color: var(--text-muted); margin: 2px 0 6px;">${escapeHtml(item.category_name || '')} · ${fmtDay(item.date)}</div>
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">${item.pills.map((p) => `<span class="${pillClass(p.type)}">${escapeHtml(p.label)}</span>`).join('')}</div>
           </div>
-        </div>`).join('');
+        </div>`
+        )
+        .join('');
       $('showMoreBtn').style.display = 'block';
     }
     hydrateIcons(badge);
@@ -469,11 +502,26 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ---------- Download report (PDF) ----------
-  const FULL_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const FULL_MONTHS = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
 
   function reportMonthLabel(mm) {
-    const [y, m] = String(mm || '').substring(0, 7).split('-');
-    return m && y ? `${FULL_MONTHS[parseInt(m, 10) - 1]} ${y}` : (mm || '');
+    const [y, m] = String(mm || '')
+      .substring(0, 7)
+      .split('-');
+    return m && y ? `${FULL_MONTHS[parseInt(m, 10) - 1]} ${y}` : mm || '';
   }
 
   function reportStatusColor(status) {
@@ -500,23 +548,30 @@ document.addEventListener('DOMContentLoaded', () => {
       { label: 'INCOME', value: money2(s.income), color: '#10b981' },
       { label: 'SPENT', value: money2(s.expense), color: '#ef4444' },
       { label: 'NET SAVINGS', value: money2(s.net), color: netColor },
-      { label: 'SAVINGS RATE', value: `${s.savings_rate || 0}%`, color: '#3b82f6' }
-    ].map((c) => `
+      { label: 'SAVINGS RATE', value: `${s.savings_rate || 0}%`, color: '#3b82f6' },
+    ]
+      .map(
+        (c) => `
       <div style="flex:1;min-width:150px;background:#ffffff;border:1px solid #e5e9f2;border-top:3px solid ${c.color};border-radius:12px;padding:16px;box-sizing:border-box;">
         <div style="font-size:10px;letter-spacing:1px;color:#64748b;font-weight:700;">${c.label}</div>
         <div style="font-size:22px;font-weight:800;color:${c.color};margin-top:6px;">${c.value}</div>
-      </div>`).join('');
+      </div>`
+      )
+      .join('');
 
-    const rows = hm.length > 0 ? hm.map((item) => {
-      const pct = item.pct === null ? '—' : `${item.pct}%`;
-      const limitText = item.budgeted ? money(item.limit) : 'No budget';
-      const stColor = reportStatusColor(item.status);
-      const spentText = item.spent > 0 ? money2(item.spent) : '—';
-      return `
+    const rows =
+      hm.length > 0
+        ? hm
+            .map((item) => {
+              const pct = item.pct === null ? '—' : `${item.pct}%`;
+              const limitText = item.budgeted ? money(item.limit) : 'No budget';
+              const stColor = reportStatusColor(item.status);
+              const spentText = item.spent > 0 ? money2(item.spent) : '—';
+              return `
         <tr>
           <td style="padding:9px 8px;border-bottom:1px solid #eef1f7;">
             <div style="display:flex;align-items:center;gap:8px;">
-              <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${item.color_code || '#cbd5e1'};"></span>
+              <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${escapeHtml(item.color_code || '#cbd5e1')};"></span>
               <span style="font-weight:600;color:#0f172a;">${escapeHtml(item.category_name)}</span>
             </div>
           </td>
@@ -527,7 +582,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <span style="font-size:11px;font-weight:700;color:#ffffff;background:${stColor};border-radius:999px;padding:3px 10px;">${reportStatusLabel(item.status)}</span>
           </td>
         </tr>`;
-    }).join('') : '<tr><td colspan="5" style="text-align:center;color:#64748b;padding:24px;">No spending recorded for this period.</td></tr>';
+            })
+            .join('')
+        : '<tr><td colspan="5" style="text-align:center;color:#64748b;padding:24px;">No spending recorded for this period.</td></tr>';
 
     const highlights = [];
     if (hl.biggest_expense) {
@@ -558,16 +615,22 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>`);
     }
 
-    const flaggedRows = flagged.length > 0
-      ? flagged.slice(0, 8).map((i) => `
+    const flaggedRows =
+      flagged.length > 0
+        ? flagged
+            .slice(0, 8)
+            .map(
+              (i) => `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eef1f7;">
           <div style="min-width:0;">
             <div style="font-size:13px;font-weight:600;color:#0f172a;">${escapeHtml(i.description || 'Transaction')}</div>
             <div style="font-size:12px;color:#64748b;margin-top:2px;">${escapeHtml(i.category_name || '')} · ${fmtDay(i.date)}${(i.pills || []).length > 0 ? ' · ' + (i.pills || []).map((p) => escapeHtml(p.label)).join(' · ') : ''}</div>
           </div>
           <div style="font-size:14px;font-weight:800;color:#ef4444;white-space:nowrap;margin-left:12px;">${money2(i.amount)}</div>
-        </div>`).join('')
-      : '<div style="font-size:13px;color:#64748b;padding:8px 0;">Nothing flagged this month.</div>';
+        </div>`
+            )
+            .join('')
+        : '<div style="font-size:13px;color:#64748b;padding:8px 0;">Nothing flagged this month.</div>';
 
     return `
       <div style="width:794px;padding:36px 40px;background:#f5f7fb;color:#0f172a;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;box-sizing:border-box;">
@@ -610,11 +673,15 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <!-- Highlights -->
-        ${highlights.length > 0 ? `
+        ${
+          highlights.length > 0
+            ? `
         <div style="margin-top:24px;">
           <div style="font-size:14px;font-weight:800;color:#0f172a;">Spending Highlights</div>
           <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;">${highlights.join('')}</div>
-        </div>` : ''}
+        </div>`
+            : ''
+        }
 
         <!-- Health + personality -->
         <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;">
@@ -657,7 +724,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const mm = currentData.meta && currentData.meta.month_year;
-    const [y, m] = String(mm || new Date().toISOString().substring(0, 7)).substring(0, 7).split('-');
+    const [y, m] = String(mm || new Date().toISOString().substring(0, 7))
+      .substring(0, 7)
+      .split('-');
     const fileName = `SpenSight_Report_${FULL_MONTHS[parseInt(m, 10) - 1] || m}_${y}.pdf`;
 
     const container = $('pdfReport');
@@ -666,14 +735,17 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadBtn.disabled = true;
     downloadBtn.innerHTML = `${SpenIcons.icon('RefreshCw')} Generating PDF…`;
     try {
-      await html2pdf().set({
-        margin: 0,
-        filename: fileName,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#f5f7fb', logging: false },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
-      }).from(container).save();
+      await html2pdf()
+        .set({
+          margin: 0,
+          filename: fileName,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, backgroundColor: '#f5f7fb', logging: false },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'] },
+        })
+        .from(container)
+        .save();
       showToast(`Report downloaded as ${fileName}.`, 'success');
     } catch (err) {
       console.error('PDF generation failed:', err);

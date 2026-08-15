@@ -32,7 +32,16 @@ exports.parseBankCSV = (filePath) => {
         };
 
         const rawDate = pick('Date', 'Txn Date', 'Transaction Date', 'Trans Date', 'Posting Date', 'Value Date');
-        const rawDesc = pick('Description', 'Narration', 'Details', 'Merchant', 'Particulars', 'Transaction', 'Remarks', 'Memo');
+        const rawDesc = pick(
+          'Description',
+          'Narration',
+          'Details',
+          'Merchant',
+          'Particulars',
+          'Transaction',
+          'Remarks',
+          'Memo'
+        );
         const rawNotes = pick('Notes', 'Note');
         const rawCategory = pick('Category', 'Categories');
         const rawAmount = pick('Amount', 'Txn Amount', 'Value', 'AMOUNT');
@@ -69,7 +78,10 @@ exports.parseBankCSV = (filePath) => {
         // Parse dates in common formats (DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD)
         let parsedDate = new Date(rawDate);
         if (isNaN(parsedDate.getTime()) && typeof rawDate === 'string') {
-          const parts = rawDate.trim().split(/[/.-]/).map((p) => parseInt(p, 10));
+          const parts = rawDate
+            .trim()
+            .split(/[/.-]/)
+            .map((p) => parseInt(p, 10));
           if (parts.length === 3) {
             let [a, b, c] = parts;
             if (c < 100) c += 2000;
@@ -87,7 +99,7 @@ exports.parseBankCSV = (filePath) => {
           amount,
           is_debit: isDebit,
           type: isDebit ? 'expense' : 'income',
-          raw_data: row
+          raw_data: row,
         });
       })
       .on('end', () => {

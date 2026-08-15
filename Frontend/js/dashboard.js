@@ -36,11 +36,27 @@ document.addEventListener('DOMContentLoaded', () => {
     transactions: [],
     charts: {},
     csvMode: 'replace',
-    confirmAction: null
+    confirmAction: null,
   };
 
   const CURRENCY = '₹';
-  const PALETTE = ['#3b82f6', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#22c55e', '#f97316', '#84cc16', '#a855f7', '#e11d48', '#64748b', '#14b8a6', '#d946ef'];
+  const PALETTE = [
+    '#3b82f6',
+    '#8b5cf6',
+    '#ef4444',
+    '#10b981',
+    '#f59e0b',
+    '#ec4899',
+    '#06b6d4',
+    '#22c55e',
+    '#f97316',
+    '#84cc16',
+    '#a855f7',
+    '#e11d48',
+    '#64748b',
+    '#14b8a6',
+    '#d946ef',
+  ];
   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   // Ignore auto-generated / dummy categories (e.g. "EdgeCat161514") everywhere.
@@ -72,8 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function escapeHtml(str) {
     return String(str === undefined || str === null ? '' : str)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function money(n) {
@@ -93,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const nums = [];
     const ops = [];
     let expectNum = true;
-    const precedence = (op) => (op === '*' || op === '/') ? 2 : 1;
+    const precedence = (op) => (op === '*' || op === '/' ? 2 : 1);
     const applyOp = (b, a, op) => {
       if (op === '+') return a + b;
       if (op === '-') return a - b;
@@ -113,7 +132,10 @@ document.addEventListener('DOMContentLoaded', () => {
         expectNum = false;
       } else if (['+', '-', '*', '/'].includes(t)) {
         if (expectNum) {
-          if (t === '-') { nums.push(0); continue; }
+          if (t === '-') {
+            nums.push(0);
+            continue;
+          }
           return NaN;
         }
         while (ops.length && precedence(ops[ops.length - 1]) >= precedence(t)) popOp();
@@ -126,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (expectNum) return NaN;
     while (ops.length) popOp();
     const result = nums[nums.length - 1];
-    return (typeof result === 'number' && isFinite(result)) ? result : NaN;
+    return typeof result === 'number' && isFinite(result) ? result : NaN;
   }
 
   // ---------- Auth & navigation ----------
@@ -169,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
       budgetsView: 'Budgets',
       accountsView: 'Accounts',
       categoriesView: 'Categories',
-      aiView: 'Cleo AI Copilot'
+      aiView: 'Cleo AI Copilot',
     };
     if (pageTitle) pageTitle.textContent = labels[viewId] || 'Dashboard';
     // Hide the global FAB in the Cleo view so it never overlaps the chat
@@ -213,7 +235,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // views where date-range toggling is relevant (Dashboard, Records, Budgets).
     const filterBar = $('filterHeaderBar');
     if (filterBar) {
-      filterBar.style.display = (viewId === 'dashboardView' || viewId === 'recordsView' || viewId === 'budgetsView') ? 'flex' : 'none';
+      filterBar.style.display =
+        viewId === 'dashboardView' || viewId === 'recordsView' || viewId === 'budgetsView' ? 'flex' : 'none';
     }
     loadHeaderTotals();
     if (viewId === 'dashboardView') loadDashboardData();
@@ -246,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const [res, accountsRes] = await Promise.all([
         apiRequest(`/analytics/summary?${analyticsQuery()}`, 'GET', null, true),
-        apiRequest(`/accounts?${filterQuery()}`, 'GET', null, true)
+        apiRequest(`/accounts?${filterQuery()}`, 'GET', null, true),
       ]);
       if (accountsRes && accountsRes.summary) {
         $('topAllAccountsBalance').textContent = money(accountsRes.summary.all_accounts_balance);
@@ -266,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
         apiRequest(`/ai/insights?month_year=${state.monthYear}`, 'GET', null, true),
         apiRequest(`/analytics/breakdown?${analyticsQuery()}`, 'GET', null, true),
         apiRequest(`/analytics/trends?${analyticsQuery()}&months=6`, 'GET', null, true),
-        apiRequest(`/analytics/cashflow?${analyticsQuery()}`, 'GET', null, true)
+        apiRequest(`/analytics/cashflow?${analyticsQuery()}`, 'GET', null, true),
       ]);
 
       // Health
@@ -285,7 +308,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Cash flow widgets
       if (cashflow) {
-        $('cashflowRatioDisplay').textContent = cashflow.cashflow_ratio >= 999 ? 'No Income' : cashflow.cashflow_ratio.toFixed(2);
+        $('cashflowRatioDisplay').textContent =
+          cashflow.cashflow_ratio >= 999 ? 'No Income' : cashflow.cashflow_ratio.toFixed(2);
         $('netSoFarDisplay').textContent = money(cashflow.net_so_far);
       }
 
@@ -332,17 +356,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!canvas) return;
     if (state.charts.category) state.charts.category.destroy();
 
-    const cats = breakdown && breakdown.categories
-      ? breakdown.categories.filter((c) => c.type === 'expense') : [];
+    const cats = breakdown && breakdown.categories ? breakdown.categories.filter((c) => c.type === 'expense') : [];
     const labels = cats.length ? cats.map((c) => c.category) : ['No Data'];
     const values = cats.length ? cats.map((c) => c.amount) : [1];
-    const colors = cats.length ? cats.map((c) => c.color_code || PALETTE[cats.indexOf(c) % PALETTE.length]) : ['#3b82f6'];
+    const colors = cats.length
+      ? cats.map((c) => c.color_code || PALETTE[cats.indexOf(c) % PALETTE.length])
+      : ['#3b82f6'];
 
     state.charts.category = new Chart(canvas.getContext('2d'), {
       type: 'doughnut',
       data: {
         labels,
-        datasets: [{ data: values, backgroundColor: colors, borderColor: '#0f172a', borderWidth: 3 }]
+        datasets: [{ data: values, backgroundColor: colors, borderColor: '#0f172a', borderWidth: 3 }],
       },
       options: {
         responsive: true,
@@ -362,11 +387,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const total = values.reduce((s, v) => s + v, 0);
                 const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
                 return ` ${pct}% of spend`;
-              }
-            }
-          }
-        }
-      }
+              },
+            },
+          },
+        },
+      },
     });
 
     // Legend with percentages
@@ -379,8 +404,8 @@ document.addEventListener('DOMContentLoaded', () => {
         item.className = 'chart-legend-item';
         item.innerHTML = `
           <span style="display: flex; align-items: center; gap: 8px;">
-            <span class="chart-legend-dot" style="background: ${colors[i]};"></span>
-            <span data-icon="${c.icon_name || 'Tag'}"></span> ${escapeHtml(c.category)}
+            <span class="chart-legend-dot" style="background: ${escapeHtml(colors[i])};"></span>
+            <span data-icon="${escapeHtml(c.icon_name || 'Tag')}"></span> ${escapeHtml(c.category)}
           </span>
           <span style="font-weight: 700;">${money(c.amount)} <span style="color: var(--text-muted); font-weight: 600;">(${pct}%)</span></span>`;
         legend.appendChild(item);
@@ -394,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!canvas) return;
     if (state.charts.trend) state.charts.trend.destroy();
 
-    const data = (trends && trends.trend) ? trends.trend : [];
+    const data = trends && trends.trend ? trends.trend : [];
     const labels = data.map((d) => {
       if (state.range === 'monthly') {
         const [y, m] = d.bucket.split('-');
@@ -418,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tension: 0.4,
             pointRadius: 3,
             pointHoverRadius: 5,
-            borderWidth: 2
+            borderWidth: 2,
           },
           {
             label: 'Income',
@@ -429,9 +454,9 @@ document.addEventListener('DOMContentLoaded', () => {
             tension: 0.4,
             pointRadius: 3,
             pointHoverRadius: 5,
-            borderWidth: 2
-          }
-        ]
+            borderWidth: 2,
+          },
+        ],
       },
       options: {
         responsive: true,
@@ -443,14 +468,17 @@ document.addEventListener('DOMContentLoaded', () => {
             backgroundColor: 'rgba(17,24,39,0.95)',
             borderColor: 'rgba(255,255,255,0.1)',
             borderWidth: 1,
-            callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${money(ctx.parsed.y)}` }
-          }
+            callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${money(ctx.parsed.y)}` },
+          },
         },
         scales: {
           x: { ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: 'rgba(255,255,255,0.04)' } },
-          y: { ticks: { color: '#64748b', callback: (v) => `${CURRENCY}${v}` }, grid: { color: 'rgba(255,255,255,0.04)' } }
-        }
-      }
+          y: {
+            ticks: { color: '#64748b', callback: (v) => `${CURRENCY}${v}` },
+            grid: { color: 'rgba(255,255,255,0.04)' },
+          },
+        },
+      },
     });
   }
 
@@ -466,13 +494,15 @@ document.addEventListener('DOMContentLoaded', () => {
       type: 'bar',
       data: {
         labels: ['Income', 'Expense'],
-        datasets: [{
-          data: [income, expense],
-          backgroundColor: ['rgba(16,185,129,0.75)', 'rgba(239,68,68,0.75)'],
-          hoverBackgroundColor: ['#10b981', '#ef4444'],
-          borderRadius: 10,
-          barThickness: 44
-        }]
+        datasets: [
+          {
+            data: [income, expense],
+            backgroundColor: ['rgba(16,185,129,0.75)', 'rgba(239,68,68,0.75)'],
+            hoverBackgroundColor: ['#10b981', '#ef4444'],
+            borderRadius: 10,
+            barThickness: 44,
+          },
+        ],
       },
       options: {
         responsive: true,
@@ -483,14 +513,17 @@ document.addEventListener('DOMContentLoaded', () => {
             backgroundColor: 'rgba(17,24,39,0.95)',
             borderColor: 'rgba(255,255,255,0.1)',
             borderWidth: 1,
-            callbacks: { label: (ctx) => ` ${ctx.label}: ${money(ctx.parsed.y)}` }
-          }
+            callbacks: { label: (ctx) => ` ${ctx.label}: ${money(ctx.parsed.y)}` },
+          },
         },
         scales: {
           x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
-          y: { ticks: { color: '#64748b', callback: (v) => `${CURRENCY}${v}` }, grid: { color: 'rgba(255,255,255,0.04)' } }
-        }
-      }
+          y: {
+            ticks: { color: '#64748b', callback: (v) => `${CURRENCY}${v}` },
+            grid: { color: 'rgba(255,255,255,0.04)' },
+          },
+        },
+      },
     });
   }
 
@@ -506,7 +539,8 @@ document.addEventListener('DOMContentLoaded', () => {
       state.transactions = txs;
       renderTransactionTable(tbody, txs);
     } catch (error) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--accent-red);">Error loading ledger transactions.</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="7" style="text-align: center; color: var(--accent-red);">Error loading ledger transactions.</td></tr>';
     }
   }
 
@@ -530,13 +564,13 @@ document.addEventListener('DOMContentLoaded', () => {
       tr.innerHTML = `
         <td style="white-space: nowrap;">${dateOnly(txn.transaction_date)}</td>
         <td style="max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(txn.description)}</td>
-        <td><span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(59,130,246,0.12); color: #3b82f6; padding: 4px 10px; border-radius: 20px; font-size: 12px;"><span data-icon="${txn.category_icon || 'Tag'}"></span> ${escapeHtml(txn.category_name || 'General')}</span></td>
+        <td><span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(59,130,246,0.12); color: #3b82f6; padding: 4px 10px; border-radius: 20px; font-size: 12px;"><span data-icon="${escapeHtml(txn.category_icon || 'Tag')}"></span> ${escapeHtml(txn.category_name || 'General')}</span></td>
         <td style="color: var(--text-muted); font-size: 13px;">${escapeHtml(txn.account_name || 'Cash')}${isTransfer && txn.to_account_name ? ` → ${escapeHtml(txn.to_account_name)}` : ''}</td>
         <td class="${amountClass}">${amountPrefix}${money(txn.amount)}</td>
         <td>
           <div class="txn-actions">
-            <button class="btn btn-ghost btn-sm edit-txn-btn" data-id="${txn.id}" style="width: auto; padding: 6px 10px;"><span data-icon="Pencil"></span></button>
-            <button class="btn btn-danger btn-sm delete-txn-btn" data-id="${txn.id}" style="width: auto; padding: 6px 10px;"><span data-icon="Trash2"></span></button>
+            <button class="btn btn-ghost btn-sm edit-txn-btn" data-id="${escapeHtml(txn.id)}" style="width: auto; padding: 6px 10px;"><span data-icon="Pencil"></span></button>
+            <button class="btn btn-danger btn-sm delete-txn-btn" data-id="${escapeHtml(txn.id)}" style="width: auto; padding: 6px 10px;"><span data-icon="Trash2"></span></button>
           </div>
         </td>
       `;
@@ -625,7 +659,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if ($('editNotesInput')) $('editNotesInput').value = txn.description || '';
     if ($('editAccountLabel')) $('editAccountLabel').textContent = txn.account_name || 'Select Account';
     if ($('editCategoryLabel')) {
-      $('editCategoryLabel').textContent = state.editCategoryId && txn.category_name ? txn.category_name : 'Select Category';
+      $('editCategoryLabel').textContent =
+        state.editCategoryId && txn.category_name ? txn.category_name : 'Select Category';
     }
 
     document.querySelectorAll('#editTxnModal .type-tab').forEach((t) => {
@@ -639,10 +674,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const closeEditTxnBtn = $('closeEditTxnBtn');
-  if (closeEditTxnBtn) closeEditTxnBtn.addEventListener('click', () => {
-    if (editTxnModal) editTxnModal.classList.remove('active');
-    resetEditTxn();
-  });
+  if (closeEditTxnBtn)
+    closeEditTxnBtn.addEventListener('click', () => {
+      if (editTxnModal) editTxnModal.classList.remove('active');
+      resetEditTxn();
+    });
 
   document.querySelectorAll('#editTxnModal .type-tab').forEach((tab) => {
     tab.addEventListener('click', () => {
@@ -675,7 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
           category_id: state.editTxType === 'transfer' ? null : state.editCategoryId,
           description: $('editNotesInput') ? $('editNotesInput').value.trim() : '',
           notes: $('editNotesInput') ? $('editNotesInput').value.trim() : '',
-          date: date ? new Date(date).toISOString() : undefined
+          date: date ? new Date(date).toISOString() : undefined,
         };
 
         saveEditTxnBtn.disabled = true;
@@ -703,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await apiRequest(`/budgets?${filterQuery()}&carry_over=${state.carryOver}`, 'GET', null, true);
       budgetedContainer.innerHTML = '';
       unbudgetedContainer.innerHTML = '';
-      state.budgets = (res && res.budgets) ? res.budgets : [];
+      state.budgets = res && res.budgets ? res.budgets : [];
 
       let totalBudget = 0;
       let totalSpent = 0;
@@ -726,8 +762,8 @@ document.addEventListener('DOMContentLoaded', () => {
           div.innerHTML = `
             <div class="budget-card-head">
               <div class="budget-card-title">
-                <div class="category-circle-icon" style="background: ${b.color_code || '#3b82f6'}22; color: ${b.color_code || '#3b82f6'};">
-                  <span data-icon="${b.icon_name || 'Tag'}"></span>
+                <div class="category-circle-icon" style="background: ${escapeHtml(b.color_code || '#3b82f6')}22; color: ${escapeHtml(b.color_code || '#3b82f6')};">
+                  <span data-icon="${escapeHtml(b.icon_name || 'Tag')}"></span>
                 </div>
                 <div class="budget-card-name">
                   <strong>${escapeHtml(b.category_name)}${b.carried_over > 0 ? ` <span style="color: var(--accent-green); font-size: 11px; font-weight: 600;">(+${money(b.carried_over)} carried)</span>` : ''}</strong>
@@ -742,8 +778,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="budget-static-badge"><span data-icon="Lock"></span> Budget set</span>
             </div>
             <div class="budget-inline-actions">
-              <button class="btn btn-ghost btn-sm edit-budget-btn" data-id="${b.budget_id}" data-name="${escapeHtml(b.category_name)}" data-limit="${limit}"><span data-icon="Pencil"></span> Edit</button>
-              <button class="btn btn-danger btn-sm remove-budget-btn" data-id="${b.budget_id}" data-name="${escapeHtml(b.category_name)}"><span data-icon="Trash2"></span> Remove</button>
+              <button class="btn btn-ghost btn-sm edit-budget-btn" data-id="${escapeHtml(b.budget_id)}" data-name="${escapeHtml(b.category_name)}" data-limit="${escapeHtml(limit)}"><span data-icon="Pencil"></span> Edit</button>
+              <button class="btn btn-danger btn-sm remove-budget-btn" data-id="${escapeHtml(b.budget_id)}" data-name="${escapeHtml(b.category_name)}"><span data-icon="Trash2"></span> Remove</button>
             </div>
           `;
           budgetedContainer.appendChild(div);
@@ -753,14 +789,14 @@ document.addEventListener('DOMContentLoaded', () => {
           div.innerHTML = `
             <div class="budget-card-head">
               <div class="budget-card-title">
-                <div class="category-circle-icon" style="background: ${b.color_code || '#3b82f6'}22; color: ${b.color_code || '#3b82f6'};">
-                  <span data-icon="${b.icon_name || 'Tag'}"></span>
+                <div class="category-circle-icon" style="background: ${escapeHtml(b.color_code || '#3b82f6')}22; color: ${escapeHtml(b.color_code || '#3b82f6')};">
+                  <span data-icon="${escapeHtml(b.icon_name || 'Tag')}"></span>
                 </div>
                 <div class="budget-card-name">
                   <strong>${escapeHtml(b.category_name)}</strong>
                 </div>
               </div>
-              <button class="btn btn-ghost btn-sm set-budget-btn" data-id="${b.category_id}" data-name="${b.category_name}"><span data-icon="Target"></span> SET BUDGET</button>
+              <button class="btn btn-ghost btn-sm set-budget-btn" data-id="${escapeHtml(b.category_id)}" data-name="${escapeHtml(b.category_name)}"><span data-icon="Target"></span> SET BUDGET</button>
             </div>
           `;
           unbudgetedContainer.appendChild(div);
@@ -779,7 +815,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const catName = btn.getAttribute('data-name');
 
           // Strictly ADD-only: never open a prompt to modify an existing budget.
-          const alreadySet = state.budgets.some((b) => String(b.category_id) === catId && parseFloat(b.effective_limit || b.limit_amount || 0) > 0);
+          const alreadySet = state.budgets.some(
+            (b) => String(b.category_id) === catId && parseFloat(b.effective_limit || b.limit_amount || 0) > 0
+          );
           if (alreadySet) {
             showToast(`A budget is already set for ${catName} this month.`, 'info');
             return;
@@ -792,7 +830,12 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Please enter a valid positive number.', 'error');
             return;
           }
-          apiRequest('/budgets', 'POST', { category_id: parseInt(catId, 10), limit_amount: limit, month_year: state.monthYear }, true)
+          apiRequest(
+            '/budgets',
+            'POST',
+            { category_id: parseInt(catId, 10), limit_amount: limit, month_year: state.monthYear },
+            true
+          )
             .then(() => {
               showToast(`Budget saved for ${catName}.`);
               loadBudgetsData();
@@ -898,7 +941,8 @@ document.addEventListener('DOMContentLoaded', () => {
       container.innerHTML = '';
 
       if (accounts.length === 0) {
-        container.innerHTML = '<div class="empty-state"><span data-icon="Wallet"></span><p>No accounts yet. Add one below.</p></div>';
+        container.innerHTML =
+          '<div class="empty-state"><span data-icon="Wallet"></span><p>No accounts yet. Add one below.</p></div>';
         hydrateIcons(container);
         return;
       }
@@ -909,8 +953,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const balance = parseFloat(acc.balance || 0);
         div.innerHTML = `
           <div style="display: flex; align-items: center; gap: 14px;">
-            <div class="category-circle-icon" style="background: ${acc.color_code || '#3b82f6'}22; color: ${acc.color_code || '#3b82f6'};">
-              <span data-icon="${acc.icon_name || 'Wallet'}"></span>
+            <div class="category-circle-icon" style="background: ${escapeHtml(acc.color_code || '#3b82f6')}22; color: ${escapeHtml(acc.color_code || '#3b82f6')};">
+              <span data-icon="${escapeHtml(acc.icon_name || 'Wallet')}"></span>
             </div>
             <div>
               <strong style="font-size: 15px;">${escapeHtml(acc.name)}</strong>
@@ -919,7 +963,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">
             <div style="font-size: 18px; font-weight: 800; color: ${balance < 0 ? '#ef4444' : '#10b981'};">${money(balance)}</div>
-            <button class="btn btn-danger btn-sm delete-account-btn" data-id="${acc.id}" data-name="${acc.name}"><span data-icon="Trash2"></span></button>
+            <button class="btn btn-danger btn-sm delete-account-btn" data-id="${escapeHtml(acc.id)}" data-name="${escapeHtml(acc.name)}"><span data-icon="Trash2"></span></button>
           </div>
         `;
         container.appendChild(div);
@@ -931,15 +975,18 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
           const id = btn.getAttribute('data-id');
           const name = btn.getAttribute('data-name');
-          openConfirm(`Delete account "${name}"? Its transaction history will be kept (they move to no account).`, async () => {
-            try {
-              await apiRequest(`/accounts/${id}`, 'DELETE', null, true);
-              showToast(`Account "${name}" deleted.`);
-              loadAccountsData();
-            } catch (err) {
-              showToast(err.message || 'Failed to delete account.', 'error');
+          openConfirm(
+            `Delete account "${name}"? Its transaction history will be kept (they move to no account).`,
+            async () => {
+              try {
+                await apiRequest(`/accounts/${id}`, 'DELETE', null, true);
+                showToast(`Account "${name}" deleted.`);
+                loadAccountsData();
+              } catch (err) {
+                showToast(err.message || 'Failed to delete account.', 'error');
+              }
             }
-          });
+          );
         });
       });
     } catch (err) {
@@ -965,7 +1012,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        await apiRequest('/accounts', 'POST', { name, type, balance, color_code: color, icon_name: type === 'Card' ? 'CreditCard' : type === 'Savings' ? 'PiggyBank' : 'Wallet' }, true);
+        await apiRequest(
+          '/accounts',
+          'POST',
+          {
+            name,
+            type,
+            balance,
+            color_code: color,
+            icon_name: type === 'Card' ? 'CreditCard' : type === 'Savings' ? 'PiggyBank' : 'Wallet',
+          },
+          true
+        );
         showToast(`Account "${name}" created.`);
         addAccountModal.classList.remove('active');
         $('newAccountName').value = '';
@@ -996,12 +1054,12 @@ document.addEventListener('DOMContentLoaded', () => {
         div.className = 'category-row-item';
         div.innerHTML = `
           <div style="display: flex; align-items: center; gap: 12px;">
-            <div class="category-circle-icon" style="background: ${cat.color_code || '#3b82f6'}22; color: ${cat.color_code || '#3b82f6'};">
-              <span data-icon="${cat.icon_name || 'Tag'}"></span>
+            <div class="category-circle-icon" style="background: ${escapeHtml(cat.color_code || '#3b82f6')}22; color: ${escapeHtml(cat.color_code || '#3b82f6')};">
+              <span data-icon="${escapeHtml(cat.icon_name || 'Tag')}"></span>
             </div>
             <span style="font-size: 14px; font-weight: 600;">${escapeHtml(cat.name)}</span>
           </div>
-          ${cat.name !== 'Uncategorized' ? `<button class="btn btn-danger btn-sm delete-cat-btn" data-id="${cat.id}" data-name="${cat.name}"><span data-icon="Trash2"></span></button>` : ''}
+          ${cat.name !== 'Uncategorized' ? `<button class="btn btn-danger btn-sm delete-cat-btn" data-id="${escapeHtml(cat.id)}" data-name="${escapeHtml(cat.name)}"><span data-icon="Trash2"></span></button>` : ''}
         `;
         if (cat.type === 'income') incContainer.appendChild(div);
         else expContainer.appendChild(div);
@@ -1087,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', () => {
       div.style.cursor = 'pointer';
       div.innerHTML = `
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div class="category-circle-icon" style="background: ${acc.color_code || '#3b82f6'}22; color: ${acc.color_code || '#3b82f6'};"><span data-icon="${acc.icon_name || 'Wallet'}"></span></div>
+          <div class="category-circle-icon" style="background: ${escapeHtml(acc.color_code || '#3b82f6')}22; color: ${escapeHtml(acc.color_code || '#3b82f6')};"><span data-icon="${escapeHtml(acc.icon_name || 'Wallet')}"></span></div>
           <strong style="font-size: 14px;">${escapeHtml(acc.name)}</strong>
         </div>
         <span style="color: #10b981; font-weight: 700;">${money(acc.balance)}</span>
@@ -1141,12 +1199,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       container.innerHTML = '';
       const txType = state.categoryPickerFor === 'edit' ? state.editTxType : state.currentTxType;
-      const filtered = txType === 'income'
-        ? categories.filter((c) => c.type === 'income')
-        : categories.filter((c) => c.type === 'expense');
+      const filtered =
+        txType === 'income'
+          ? categories.filter((c) => c.type === 'income')
+          : categories.filter((c) => c.type === 'expense');
 
       if (filtered.length === 0) {
-        container.innerHTML = '<p style="color: #94a3b8; font-size: 13px; grid-column: 1 / -1;">No matching categories. Add one from the Categories view.</p>';
+        container.innerHTML =
+          '<p style="color: #94a3b8; font-size: 13px; grid-column: 1 / -1;">No matching categories. Add one from the Categories view.</p>';
         return;
       }
 
@@ -1154,8 +1214,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const div = document.createElement('div');
         div.className = 'category-icon-card';
         div.innerHTML = `
-          <div class="category-circle-icon" style="background: ${cat.color_code || '#3b82f6'}22; color: ${cat.color_code || '#3b82f6'};">
-            <span data-icon="${cat.icon_name || 'Tag'}"></span>
+          <div class="category-circle-icon" style="background: ${escapeHtml(cat.color_code || '#3b82f6')}22; color: ${escapeHtml(cat.color_code || '#3b82f6')};">
+            <span data-icon="${escapeHtml(cat.icon_name || 'Tag')}"></span>
           </div>
           <span style="font-size: 12px; font-weight: 600;">${escapeHtml(cat.name)}</span>
         `;
@@ -1280,7 +1340,7 @@ document.addEventListener('DOMContentLoaded', () => {
           account_id: state.selectedAccountId,
           to_account_id: state.selectedToAccountId,
           notes,
-          date: date ? new Date(date).toISOString() : new Date().toISOString()
+          date: date ? new Date(date).toISOString() : new Date().toISOString(),
         };
 
         if (state.currentTxType === 'transfer' && !state.selectedToAccountId) {
@@ -1342,10 +1402,10 @@ document.addEventListener('DOMContentLoaded', () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ prompt: promptText }),
-          signal: controller.signal
+          signal: controller.signal,
         });
 
         if (!response.ok) {
@@ -1382,7 +1442,9 @@ document.addEventListener('DOMContentLoaded', () => {
                   assistantMsg.textContent = fullText;
                   aiChatBox.scrollTop = aiChatBox.scrollHeight;
                 }
-              } catch (e) { /* skip malformed keep-alives */ }
+              } catch (e) {
+                /* skip malformed keep-alives */
+              }
             }
           }
         }
@@ -1461,7 +1523,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (clearCsvBtn) {
     clearCsvBtn.addEventListener('click', () => {
-      openConfirm('Are you sure you want to delete all transactions imported from the CSV statement? Manual transactions will remain untouched.', doClearCsv);
+      openConfirm(
+        'Are you sure you want to delete all transactions imported from the CSV statement? Manual transactions will remain untouched.',
+        doClearCsv
+      );
     });
   }
 
@@ -1471,9 +1536,10 @@ document.addEventListener('DOMContentLoaded', () => {
       state.csvMode = btn.getAttribute('data-csv-mode');
       csvModeButtons.forEach((b) => b.classList.toggle('active', b === btn));
       if (csvModeHint) {
-        csvModeHint.textContent = state.csvMode === 'replace'
-          ? 'Replace: previously imported CSV data will be removed before importing.'
-          : 'Merge: duplicates (by date, description and amount) will be skipped.';
+        csvModeHint.textContent =
+          state.csvMode === 'replace'
+            ? 'Replace: previously imported CSV data will be removed before importing.'
+            : 'Merge: duplicates (by date, description and amount) will be skipped.';
       }
     });
   });
@@ -1528,11 +1594,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------- Initial execution ----------
   (async function init() {
     hydrateIcons(document);
-    await Promise.all([
-      loadCarryOver(),
-      loadAccountsData(),
-      loadCategoriesData()
-    ]);
+    await Promise.all([loadCarryOver(), loadAccountsData(), loadCategoriesData()]);
     setActiveView('dashboardView');
   })();
 });

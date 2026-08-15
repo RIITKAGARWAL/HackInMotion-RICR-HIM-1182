@@ -44,7 +44,8 @@ async function categoryIdByName(name) {
  * @returns {Promise<number>} number of deleted rows
  */
 async function removeImportedForUser(userId) {
-  await db.query(`
+  await db.query(
+    `
     UPDATE accounts a SET balance = a.balance - sub.net
     FROM (
       SELECT account_id,
@@ -54,12 +55,11 @@ async function removeImportedForUser(userId) {
       GROUP BY account_id
     ) sub
     WHERE a.id = sub.account_id AND a.user_id = $1
-  `, [userId]);
-
-  const res = await db.query(
-    "DELETE FROM transactions WHERE user_id = $1 AND source = 'csv_import'",
+  `,
     [userId]
   );
+
+  const res = await db.query("DELETE FROM transactions WHERE user_id = $1 AND source = 'csv_import'", [userId]);
   return res.rowCount || 0;
 }
 
@@ -69,11 +69,14 @@ async function removeImportedForUser(userId) {
  * @returns {Promise<Set<string>>}
  */
 async function existingTransactionKeys(userId) {
-  const res = await db.query(`
+  const res = await db.query(
+    `
     SELECT DATE(date) AS d, LOWER(BTRIM(description)) AS descr, amount::numeric
     FROM transactions
     WHERE user_id = $1
-  `, [userId]);
+  `,
+    [userId]
+  );
 
   const set = new Set();
   for (const r of res.rows) {
@@ -153,20 +156,21 @@ async function processCsvFile(userId, filePath, mode = 'merge') {
 
     const classification = classifyTransaction(tx.description);
     const providedCategory = tx.category ? String(tx.category).trim() : '';
-    const classifierCategory = tx.type === 'income'
-      ? (classification.category === 'Uncategorized' ? 'Uncategorized' : classification.category)
-      : classification.category;
+    const classifierCategory =
+      tx.type === 'income'
+        ? classification.category === 'Uncategorized'
+          ? 'Uncategorized'
+          : classification.category
+        : classification.category;
 
     // Prefer the category declared directly in the CSV row (e.g. "Food",
     // "Bills", "Health"); fall back to the smart classifier, then to
     // 'Uncategorized' only as a last resort.
-    let categoryId = providedCategory
-      ? await getCategoryId(providedCategory)
-      : await getCategoryId(classifierCategory);
+    let categoryId = providedCategory ? await getCategoryId(providedCategory) : await getCategoryId(classifierCategory);
     if (!categoryId && providedCategory) {
       categoryId = await getCategoryId(classifierCategory);
     }
-    const finalCategoryId = categoryId || await getCategoryId('Uncategorized');
+    const finalCategoryId = categoryId || (await getCategoryId('Uncategorized'));
 
     rows.push({
       userId,
@@ -177,7 +181,7 @@ async function processCsvFile(userId, filePath, mode = 'merge') {
       amount: tx.amount,
       type: tx.type,
       isDebit: tx.is_debit,
-      source: 'csv_import'
+      source: 'csv_import',
     });
     categoryIds.push(finalCategoryId);
 
@@ -206,7 +210,9 @@ async function processCsvFile(userId, filePath, mode = 'merge') {
 
     // Reflect the net balance change on the default account
     await db.query('UPDATE accounts SET balance = balance + $1 WHERE id = $2 AND user_id = $3', [
-      netBalance, accountId, userId
+      netBalance,
+      accountId,
+      userId,
     ]);
   }
 

@@ -1,7 +1,10 @@
 const db = require('../config/db');
 const { invalidateAllUserCache } = require('../services/cacheService');
 
-const toInt = (v) => { const n = parseInt(v, 10); return isNaN(n) ? null : n; };
+const toInt = (v) => {
+  const n = parseInt(v, 10);
+  return isNaN(n) ? null : n;
+};
 
 // Auto-generated / dummy categories (e.g. "EdgeCat161514") are never
 // exposed, creatable or editable.
@@ -131,5 +134,5 @@ module.exports = {
   getCategoryById,
   createCategory,
   updateCategory,
-  deleteCategory
+  deleteCategory,
 };

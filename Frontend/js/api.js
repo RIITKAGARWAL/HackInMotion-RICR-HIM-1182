@@ -9,9 +9,7 @@
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const isDifferentLocalPort = isLocal && window.location.port !== '5000' && window.location.port !== '';
 
-const API_BASE_URL = isDifferentLocalPort
-  ? `http://${window.location.hostname}:5000/api`
-  : '/api';
+const API_BASE_URL = isDifferentLocalPort ? `http://${window.location.hostname}:5000/api` : '/api';
 
 const TOKEN_KEY = 'spensight_token';
 const USER_KEY = 'spensight_user';
@@ -148,7 +146,7 @@ async function apiUpload(endpoint, file, fieldName = 'statement', extraFields = 
     response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers,
-      body: formData
+      body: formData,
     });
   } catch (netErr) {
     const error = new Error('Network error while uploading the file.');

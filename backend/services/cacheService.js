@@ -23,7 +23,7 @@ async function getCachedDashboardData(userId) {
 
   const dashboardPayload = {
     spendingBreakdown: result.rows,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   };
 
   // 3. Cache payload

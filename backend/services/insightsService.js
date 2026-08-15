@@ -14,7 +14,9 @@ const CURRENCY = process.env.CURRENCY_SYMBOL || '₹';
 const DEFAULT_COLOR = '#6B7280';
 
 function daysInMonth(monthYear) {
-  const [y, m] = String(monthYear).split('-').map((n) => parseInt(n, 10));
+  const [y, m] = String(monthYear)
+    .split('-')
+    .map((n) => parseInt(n, 10));
   if (!y || !m) return 30;
   return new Date(Date.UTC(y, m, 0)).getUTCDate();
 }
@@ -37,7 +39,7 @@ async function getOverview(userId, monthYear) {
     loadTotals(userId, mm),
     loadCategorySpend(userId, mm),
     loadBudgets(userId, mm),
-    loadExpenses(userId, mm)
+    loadExpenses(userId, mm),
   ]);
 
   const health = await aiEngine.calculateHealthScore(userId, mm);
@@ -46,16 +48,15 @@ async function getOverview(userId, monthYear) {
     meta: {
       month_year: mm,
       currency: CURRENCY,
-      generated_at: new Date().toISOString()
+      generated_at: new Date().toISOString(),
     },
     summary: {
       income: totals.income,
       expense: totals.expense,
       net: totals.income - totals.expense,
-      savings_rate: totals.income > 0
-        ? Number(((totals.income - totals.expense) / totals.income * 100).toFixed(1))
-        : 0,
-      transaction_count: expenses.length
+      savings_rate:
+        totals.income > 0 ? Number((((totals.income - totals.expense) / totals.income) * 100).toFixed(1)) : 0,
+      transaction_count: expenses.length,
     },
     spending_personality: computePersonality(categorySpend),
     category_heatmap: computeHeatmap(categorySpend, budgets),
@@ -63,7 +64,7 @@ async function getOverview(userId, monthYear) {
     financial_health: computeHealthBreakdown(health, budgets, categorySpend),
     pace_tracker: computePace(expenses, mm),
     highlights: computeHighlights(expenses),
-    flagged_expenses: computeFlagged(expenses, categorySpend, budgets)
+    flagged_expenses: computeFlagged(expenses, categorySpend, budgets),
   };
 }
 
@@ -79,7 +80,7 @@ async function loadTotals(userId, monthYear) {
   const row = res.rows[0] || {};
   return {
     income: parseFloat(row.income || 0),
-    expense: parseFloat(row.expense || 0)
+    expense: parseFloat(row.expense || 0),
   };
 }
 
@@ -100,7 +101,7 @@ async function loadCategorySpend(userId, monthYear) {
   return res.rows.map((r) => ({
     category_name: r.category_name,
     color_code: r.color_code || DEFAULT_COLOR,
-    total_amount: parseFloat(r.total_amount || 0)
+    total_amount: parseFloat(r.total_amount || 0),
   }));
 }
 
@@ -125,7 +126,7 @@ async function loadBudgets(userId, monthYear) {
     category_name: r.category_name,
     color_code: r.color_code || DEFAULT_COLOR,
     monthly_limit: parseFloat(r.monthly_limit || 0),
-    spent: parseFloat(r.spent || 0)
+    spent: parseFloat(r.spent || 0),
   }));
 }
 
@@ -151,7 +152,7 @@ async function loadExpenses(userId, monthYear) {
     description: r.description,
     amount: parseFloat(r.amount || 0),
     category_name: r.category_name,
-    color_code: r.color_code || DEFAULT_COLOR
+    color_code: r.color_code || DEFAULT_COLOR,
   }));
 }
 
@@ -165,7 +166,7 @@ function computePersonality(categorySpend) {
       description: `Nothing recorded for this month yet. Add a few expenses and we'll read your habits instantly.`,
       top_category: null,
       top_share: 0,
-      active_categories: 0
+      active_categories: 0,
     };
   }
 
@@ -197,7 +198,7 @@ function computePersonality(categorySpend) {
     description,
     top_category: top.category_name,
     top_share: Number(topShare.toFixed(1)),
-    active_categories: activeCount
+    active_categories: activeCount,
   };
 }
 
@@ -207,7 +208,9 @@ function computeHeatmap(categorySpend, budgets) {
   const seen = new Set();
 
   const budgetMap = {};
-  budgets.forEach((b) => { budgetMap[b.category_name] = b; });
+  budgets.forEach((b) => {
+    budgetMap[b.category_name] = b;
+  });
 
   categorySpend.forEach((c) => {
     const budget = budgetMap[c.category_name];
@@ -221,7 +224,7 @@ function computeHeatmap(categorySpend, budgets) {
       limit: limit || null,
       pct: pct === null ? null : Number(pct.toFixed(0)),
       budgeted: limit > 0,
-      status
+      status,
     });
     seen.add(c.category_name);
   });
@@ -237,7 +240,7 @@ function computeHeatmap(categorySpend, budgets) {
       limit: b.monthly_limit || null,
       pct: b.monthly_limit > 0 ? Number(pct.toFixed(0)) : null,
       budgeted: b.monthly_limit > 0,
-      status: b.monthly_limit > 0 ? (pct >= 100 ? 'Over' : pct >= 80 ? 'Watch' : 'Normal') : 'Normal'
+      status: b.monthly_limit > 0 ? (pct >= 100 ? 'Over' : pct >= 80 ? 'Watch' : 'Normal') : 'Normal',
     });
   });
 
@@ -265,7 +268,7 @@ function computeOverrun(categorySpend, budgets, totalExpense, monthYear) {
         spent: b.spent,
         pct: Number(pct.toFixed(0)),
         projected: projectedCat,
-        projected_pct: b.monthly_limit > 0 ? clampPct((projectedCat / b.monthly_limit) * 100) : 0
+        projected_pct: b.monthly_limit > 0 ? clampPct((projectedCat / b.monthly_limit) * 100) : 0,
       };
     })
     .filter((c) => c.projected_pct >= 80 || c.pct >= 80);
@@ -293,7 +296,7 @@ function computeOverrun(categorySpend, budgets, totalExpense, monthYear) {
     delta,
     status,
     message,
-    overrun_categories: overrunCategories.slice(0, 4)
+    overrun_categories: overrunCategories.slice(0, 4),
   };
 }
 
@@ -317,9 +320,10 @@ function computeHealthBreakdown(health, budgets, categorySpend) {
 
   // Budget pacing: share of budgets currently within their limit.
   const budgeted = budgets.filter((b) => b.monthly_limit > 0);
-  const pacing = budgeted.length > 0
-    ? Math.round((budgeted.filter((b) => b.spent <= b.monthly_limit).length / budgeted.length) * 100)
-    : null;
+  const pacing =
+    budgeted.length > 0
+      ? Math.round((budgeted.filter((b) => b.spent <= b.monthly_limit).length / budgeted.length) * 100)
+      : null;
 
   // Category balance: low concentration = high balance score.
   const total = categorySpend.reduce((s, c) => s + c.total_amount, 0);
@@ -347,7 +351,7 @@ function computeHealthBreakdown(health, budgets, categorySpend) {
     score,
     status: health.overall_status || (score >= 70 ? 'Healthy' : score >= 40 ? 'Warning' : 'Critical'),
     savings_rate: Number(savingsRate.toFixed(1)),
-    sub_scores: subScores
+    sub_scores: subScores,
   };
 }
 
@@ -401,11 +405,15 @@ function computePace(expenses, monthYear) {
 
   const insights = [];
   if (changePct === null) {
-    insights.push('No expenses in the tracked windows yet — add transactions and we\'ll measure your pace.');
+    insights.push("No expenses in the tracked windows yet — add transactions and we'll measure your pace.");
   } else if (changePct < 0) {
-    insights.push(`Your daily spending is ${Math.abs(changePct).toFixed(0)}% lower than last week. The trend is your friend — keep it rolling.`);
+    insights.push(
+      `Your daily spending is ${Math.abs(changePct).toFixed(0)}% lower than last week. The trend is your friend — keep it rolling.`
+    );
   } else if (changePct > 0) {
-    insights.push(`Daily spending is up ${changePct.toFixed(0)}% vs last week. Double-check the big-ticket days below.`);
+    insights.push(
+      `Daily spending is up ${changePct.toFixed(0)}% vs last week. Double-check the big-ticket days below.`
+    );
   } else {
     insights.push('Your daily pace is holding steady versus last week.');
   }
@@ -415,7 +423,7 @@ function computePace(expenses, monthYear) {
     last_week_daily_avg: Number(lastAvg.toFixed(2)),
     change_pct: changePct,
     top_days: topDays,
-    insights
+    insights,
   };
 }
 
@@ -450,7 +458,11 @@ function computeHighlights(expenses) {
     while (cursor.getTime() <= endDate.getTime()) {
       const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
       if (spendSet.has(key)) {
-        if (cur > best) { best = cur; bestStart = curStart; bestEnd = previousDay(cursor); }
+        if (cur > best) {
+          best = cur;
+          bestStart = curStart;
+          bestEnd = previousDay(cursor);
+        }
         cur = 0;
         curStart = null;
       } else {
@@ -459,7 +471,11 @@ function computeHighlights(expenses) {
       }
       cursor.setDate(cursor.getDate() + 1);
     }
-    if (cur > best) { best = cur; bestStart = curStart; bestEnd = previousDay(endDate); }
+    if (cur > best) {
+      best = cur;
+      bestStart = curStart;
+      bestEnd = previousDay(endDate);
+    }
     if (best > 0 && bestStart) {
       longestStreak = { days: best, start_date: bestStart, end_date: bestEnd || bestStart };
     }
@@ -472,11 +488,11 @@ function computeHighlights(expenses) {
           amount: biggest.amount,
           date: biggest.date,
           category: biggest.category_name,
-          color_code: biggest.color_code
+          color_code: biggest.color_code,
         }
       : null,
     highest_spending_day: highestDay,
-    longest_no_spend_streak: longestStreak.days > 0 ? longestStreak : null
+    longest_no_spend_streak: longestStreak.days > 0 ? longestStreak : null,
   };
 }
 
@@ -509,14 +525,15 @@ function computeFlagged(expenses, categorySpend, budgets) {
   });
 
   const budgetMap = {};
-  budgets.forEach((b) => { budgetMap[b.category_name] = b; });
+  budgets.forEach((b) => {
+    budgetMap[b.category_name] = b;
+  });
 
   const flags = [];
   expenses.forEach((e) => {
     const pills = [];
     const avg = catAvg[e.category_name] || 0;
-    const categoryMax = byCategory[e.category_name]
-      .reduce((m, x) => (x.amount > m.amount ? x : m), { amount: 0 });
+    const categoryMax = byCategory[e.category_name].reduce((m, x) => (x.amount > m.amount ? x : m), { amount: 0 });
 
     if (avg > 0 && e.amount >= avg * 2) {
       pills.push({ type: 'High Amount', label: 'High Amount' });
@@ -525,7 +542,7 @@ function computeFlagged(expenses, categorySpend, budgets) {
       pills.push({ type: 'Sudden Spike', label: 'Sudden Spike' });
     }
     const budget = budgetMap[e.category_name];
-    if (budget && budget.monthly_limit > 0 && (budget.spent / budget.monthly_limit) >= 0.7) {
+    if (budget && budget.monthly_limit > 0 && budget.spent / budget.monthly_limit >= 0.7) {
       pills.push({ type: 'Category Overuse', label: 'Category Overuse' });
     }
     if (pills.length > 0) {
@@ -536,7 +553,7 @@ function computeFlagged(expenses, categorySpend, budgets) {
   flags.sort((a, b) => b.amount - a.amount);
   return {
     flagged_count: flags.length,
-    items: flags.slice(0, 12)
+    items: flags.slice(0, 12),
   };
 }
 

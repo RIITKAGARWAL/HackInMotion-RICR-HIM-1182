@@ -66,9 +66,12 @@ const createTransaction = async (req, res) => {
 
     // Transfer requires distinct source + destination accounts
     if (type === 'transfer') {
-      accountId = accountId || await getFallbackAccountId(userId);
+      accountId = accountId || (await getFallbackAccountId(userId));
       if (!toAccountId) {
-        const others = await db.query('SELECT id FROM accounts WHERE user_id = $1 AND id <> $2 ORDER BY id LIMIT 1', [userId, accountId]);
+        const others = await db.query('SELECT id FROM accounts WHERE user_id = $1 AND id <> $2 ORDER BY id LIMIT 1', [
+          userId,
+          accountId,
+        ]);
         if (others.rows.length === 0) {
           const newAcc = await db.query(
             "INSERT INTO accounts (user_id, name, type, balance, icon_name, color_code) VALUES ($1, 'Savings', 'Savings', 0.00, 'PiggyBank', '#ec4899') RETURNING id",
@@ -80,7 +83,7 @@ const createTransaction = async (req, res) => {
         }
       }
     } else {
-      accountId = accountId || await getFallbackAccountId(userId);
+      accountId = accountId || (await getFallbackAccountId(userId));
     }
 
     const txDate = body.date ? new Date(body.date) : new Date();
@@ -88,10 +91,13 @@ const createTransaction = async (req, res) => {
       return res.status(400).json({ error: 'Invalid transaction date provided.' });
     }
 
-    const description = String(body.description || body.notes || '')
+    const description =
+      String(body.description || body.notes || '')
+        .trim()
+        .substring(0, 255) || (type === 'income' ? 'Manual Income' : 'Manual Expense');
+    const notes = String(body.notes || '')
       .trim()
-      .substring(0, 255) || (type === 'income' ? 'Manual Income' : 'Manual Expense');
-    const notes = String(body.notes || '').trim().substring(0, 500);
+      .substring(0, 500);
     const isDebit = type === 'expense';
 
     const insertQuery = `
@@ -109,17 +115,21 @@ const createTransaction = async (req, res) => {
       description,
       amount,
       notes,
-      isDebit
+      isDebit,
     ]);
 
     // Update balances: expense debits source, income credits source, transfer moves money
     const sign = type === 'income' ? 1 : -1;
     await db.query('UPDATE accounts SET balance = balance + $1 WHERE id = $2 AND user_id = $3', [
-      sign * amount, accountId, userId
+      sign * amount,
+      accountId,
+      userId,
     ]);
     if (type === 'transfer' && toAccountId) {
       await db.query('UPDATE accounts SET balance = balance + $1 WHERE id = $2 AND user_id = $3', [
-        amount, toAccountId, userId
+        amount,
+        toAccountId,
+        userId,
       ]);
     }
 
@@ -127,7 +137,7 @@ const createTransaction = async (req, res) => {
 
     return res.status(201).json({
       message: 'Transaction saved successfully!',
-      transaction: result.rows[0]
+      transaction: result.rows[0],
     });
   } catch (error) {
     console.error('Create Transaction Error Details:', error);
@@ -149,33 +159,40 @@ const updateTransaction = async (req, res) => {
     const body = req.body || {};
     const current = existing.rows[0];
     const type = ['expense', 'income', 'transfer'].includes(body.type) ? body.type : current.type;
-    const amount = body.amount !== undefined && body.amount !== '' ? Math.abs(toFloat(body.amount)) : toFloat(current.amount);
+    const amount =
+      body.amount !== undefined && body.amount !== '' ? Math.abs(toFloat(body.amount)) : toFloat(current.amount);
     const accountId = toInt(body.account_id) || current.account_id;
     const toAccountId = body.to_account_id !== undefined ? toInt(body.to_account_id) : current.to_account_id;
     const categoryId = await safeCategoryId(body.category_id !== undefined ? body.category_id : current.category_id);
-    const description = body.description !== undefined && body.description !== ''
-      ? String(body.description).trim()
-      : current.description;
+    const description =
+      body.description !== undefined && body.description !== '' ? String(body.description).trim() : current.description;
     const notes = body.notes !== undefined ? String(body.notes).trim() : current.notes;
     const date = body.date ? new Date(body.date) : current.date;
 
     const oldSign = current.type === 'income' ? 1 : -1;
     await db.query('UPDATE accounts SET balance = balance + $1 WHERE id = $2 AND user_id = $3', [
-      -1 * oldSign * toFloat(current.amount), current.account_id, userId
+      -1 * oldSign * toFloat(current.amount),
+      current.account_id,
+      userId,
     ]);
 
     const newSign = type === 'income' ? 1 : -1;
     await db.query('UPDATE accounts SET balance = balance + $1 WHERE id = $2 AND user_id = $3', [
-      newSign * amount, accountId, userId
+      newSign * amount,
+      accountId,
+      userId,
     ]);
 
-    const result = await db.query(`
+    const result = await db.query(
+      `
       UPDATE transactions
       SET type = $1, amount = $2, account_id = $3, to_account_id = $4, category_id = $5,
           description = $6, notes = $7, date = $8, is_debit = $9
       WHERE id = $10 AND user_id = $11
       RETURNING *
-    `, [type, amount, accountId, toAccountId, categoryId, description, notes, date, type === 'expense', txId, userId]);
+    `,
+      [type, amount, accountId, toAccountId, categoryId, description, notes, date, type === 'expense', txId, userId]
+    );
 
     await invalidateUserCache(userId);
     return res.json({ message: 'Transaction updated.', transaction: result.rows[0] });
@@ -199,7 +216,9 @@ const deleteTransaction = async (req, res) => {
     const tx = existing.rows[0];
     const sign = tx.type === 'income' ? 1 : -1;
     await db.query('UPDATE accounts SET balance = balance + $1 WHERE id = $2 AND user_id = $3', [
-      -1 * sign * toFloat(tx.amount), tx.account_id, userId
+      -1 * sign * toFloat(tx.amount),
+      tx.account_id,
+      userId,
     ]);
 
     await db.query('DELETE FROM transactions WHERE id = $1 AND user_id = $2', [txId, userId]);
@@ -215,8 +234,13 @@ const uploadCsv = async (req, res) => {
   const fs = require('fs');
   // Accept a file under either 'statement' or 'file' so a mismatched
   // multer field name never surfaces as an "Unexpected field" error.
-  const uploaded = Object.values(req.files || {}).flat().map((f) => f.path);
-  const cleanup = () => uploaded.forEach((p) => { if (fs.existsSync(p)) fs.unlinkSync(p); });
+  const uploaded = Object.values(req.files || {})
+    .flat()
+    .map((f) => f.path);
+  const cleanup = () =>
+    uploaded.forEach((p) => {
+      if (fs.existsSync(p)) fs.unlinkSync(p);
+    });
   try {
     const filePath = uploaded[0];
     if (!filePath) {
@@ -244,7 +268,7 @@ const uploadCsv = async (req, res) => {
       message,
       count: result.count,
       skipped: result.skipped,
-      categoryIds: result.categoryIds
+      categoryIds: result.categoryIds,
     });
   } catch (error) {
     cleanup();
@@ -261,7 +285,7 @@ const deleteImportedCsv = async (req, res) => {
     await invalidateUserCache(req.user.id);
     return res.status(200).json({
       message: 'Imported CSV data successfully cleared.',
-      count: removed
+      count: removed,
     });
   } catch (error) {
     console.error('Clear Imported CSV Error:', error);
@@ -369,13 +393,30 @@ const getCategoryBreakdown = async (req, res) => {
       ORDER BY total_amount DESC
     `;
     const result = await db.query(sql, [userId, monthYear]);
-    const palette = ['#3b82f6', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#22c55e', '#f97316', '#84cc16', '#a855f7', '#e11d48', '#14b8a6', '#d946ef'];
+    const palette = [
+      '#3b82f6',
+      '#8b5cf6',
+      '#ef4444',
+      '#10b981',
+      '#f59e0b',
+      '#ec4899',
+      '#06b6d4',
+      '#22c55e',
+      '#f97316',
+      '#84cc16',
+      '#a855f7',
+      '#e11d48',
+      '#14b8a6',
+      '#d946ef',
+    ];
 
-    return res.json(result.rows.map((r, i) => ({
-      category_name: r.category_name,
-      total_amount: parseFloat(r.total_amount || 0),
-      color_code: r.color_code && r.color_code !== '#6B7280' ? r.color_code : palette[i % palette.length]
-    })));
+    return res.json(
+      result.rows.map((r, i) => ({
+        category_name: r.category_name,
+        total_amount: parseFloat(r.total_amount || 0),
+        color_code: r.color_code && r.color_code !== '#6B7280' ? r.color_code : palette[i % palette.length],
+      }))
+    );
   } catch (error) {
     console.error('Category Breakdown Error:', error);
     return res.status(500).json({ error: 'Failed to compute category breakdown.' });
@@ -390,5 +431,5 @@ module.exports = {
   deleteImportedCsv,
   getTransactions,
   getSummary,
-  getCategoryBreakdown
+  getCategoryBreakdown,
 };

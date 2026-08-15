@@ -10,17 +10,17 @@ const defaultCategories = [
   { name: 'Entertainment', type: 'expense', icon_name: 'Film', color_code: '#06B6D4' },
   { name: 'Bills & Healthcare', type: 'expense', icon_name: 'Activity', color_code: '#10B981' },
   { name: 'General / Miscellaneous', type: 'expense', icon_name: 'HelpCircle', color_code: '#6B7280' },
-  
+
   // Income Categories
   { name: 'Salary', type: 'income', icon_name: 'Briefcase', color_code: '#22C55E' },
   { name: 'Freelance', type: 'income', icon_name: 'Laptop', color_code: '#10B981' },
-  { name: 'Investment Return', type: 'income', icon_name: 'TrendingUp', color_code: '#059669' }
+  { name: 'Investment Return', type: 'income', icon_name: 'TrendingUp', color_code: '#059669' },
 ];
 
 async function seedDatabase() {
   try {
     console.log('Starting default category seed...');
-    
+
     for (const category of defaultCategories) {
       const queryText = `
         INSERT INTO categories (name, type, icon_name, color_code)
@@ -30,14 +30,9 @@ async function seedDatabase() {
             icon_name = EXCLUDED.icon_name, 
             color_code = EXCLUDED.color_code;
       `;
-      await db.query(queryText, [
-        category.name,
-        category.type,
-        category.icon_name,
-        category.color_code
-      ]);
+      await db.query(queryText, [category.name, category.type, category.icon_name, category.color_code]);
     }
-    
+
     console.log('✓ Category seeding completed successfully.');
     process.exit(0);
   } catch (error) {

@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+// Loads & validates env config (throws at startup if JWT_SECRET is missing)
+const { ALLOWED_ORIGINS } = require('./config/env');
 
 // Activate BullMQ background queue worker
 require('./workers/csvWorker');
@@ -10,8 +11,23 @@ const app = express();
 const ROOT_DIR = path.join(__dirname, '..');
 app.set('ROOT_DIR', ROOT_DIR);
 
-// Global Middleware
-app.use(cors());
+// Restrictive CORS: only allow requests from explicitly configured origins.
+// Same-origin requests (frontend served by this Express server) are always allowed.
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+      const error = new Error(`Origin "${origin}" is not allowed by CORS.`);
+      error.status = 403;
+      return callback(error);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
@@ -46,4 +62,5 @@ app.use(errorMiddleware);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`SpenSight server running on port ${PORT}`);
+  console.log(`CORS allowed origins: ${ALLOWED_ORIGINS.join(', ')}`);
 });

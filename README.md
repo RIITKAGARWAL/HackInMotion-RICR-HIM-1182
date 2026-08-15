@@ -212,9 +212,12 @@ NODE_ENV=development
 # Database Configuration (PostgreSQL Neon Cloud)
 DATABASE_URL=postgresql://neondb_owner:password@ep-sample-pool.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
 
-# JWT Authentication Secret
+# JWT Authentication Secret (REQUIRED — server refuses to start without it)
 JWT_SECRET=your_super_secret_jwt_signing_key_2026
 JWT_EXPIRES_IN=24h
+
+# CORS: comma-separated list of allowed browser origins (no wildcards)
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5000,http://localhost:5500,http://127.0.0.1:5500
 
 # Redis Cache & Worker Configuration (Optional for Local Mode)
 REDIS_HOST=127.0.0.1

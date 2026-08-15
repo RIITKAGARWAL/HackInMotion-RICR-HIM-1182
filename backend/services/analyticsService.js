@@ -22,7 +22,23 @@ const RANGE_LABEL_SQL = {
 };
 
 const DEFAULT_COLOR = '#6B7280';
-const CHART_PALETTE = ['#3b82f6', '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#22c55e', '#f97316', '#84cc16', '#a855f7', '#e11d48', '#64748b', '#14b8a6', '#d946ef'];
+const CHART_PALETTE = [
+  '#3b82f6',
+  '#8b5cf6',
+  '#ef4444',
+  '#10b981',
+  '#f59e0b',
+  '#ec4899',
+  '#06b6d4',
+  '#22c55e',
+  '#f97316',
+  '#84cc16',
+  '#a855f7',
+  '#e11d48',
+  '#64748b',
+  '#14b8a6',
+  '#d946ef',
+];
 
 function resolveRangeParams(query = {}) {
   const requested = query.view_mode || query.range;
@@ -58,7 +74,7 @@ async function getSummary(userId, query = {}) {
     dateClause = " AND TO_CHAR(t.date, 'YYYY-MM') = $2";
     params.push(query.month_year);
   } else {
-    dateClause = ' AND t.date >= $2::date AND t.date < ($2::date + INTERVAL \'1 month\')';
+    dateClause = " AND t.date >= $2::date AND t.date < ($2::date + INTERVAL '1 month')";
     params.push(query.month_year ? `${query.month_year}-01` : from);
   }
 
@@ -88,7 +104,7 @@ async function getSummary(userId, query = {}) {
     expense_so_far: expense,
     net_so_far: net,
     savings_rate: income > 0 ? ((net / income) * 100).toFixed(2) : '0.00',
-    transaction_count: row.transaction_count || 0
+    transaction_count: row.transaction_count || 0,
   };
 }
 
@@ -127,7 +143,7 @@ async function getCategoryBreakdown(userId, query = {}) {
     icon_name: r.icon_name,
     color_code: r.color_code || DEFAULT_COLOR,
     type: r.type,
-    amount: parseFloat(r.amount || 0)
+    amount: parseFloat(r.amount || 0),
   }));
 
   const totalExpense = rows.filter((r) => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
@@ -145,7 +161,7 @@ async function getCategoryBreakdown(userId, query = {}) {
     range,
     categories: rows,
     total_expense: totalExpense,
-    total_income: totalIncome
+    total_income: totalIncome,
   };
 }
 
@@ -184,22 +200,25 @@ async function getTrends(userId, query = {}) {
       bucket: r.bucket,
       income: parseFloat(r.income || 0),
       expense: parseFloat(r.expense || 0),
-      net: parseFloat(r.income || 0) - parseFloat(r.expense || 0)
-    }))
+      net: parseFloat(r.income || 0) - parseFloat(r.expense || 0),
+    })),
   };
 }
 
 // Cash flow ratio summary (income vs expense + health)
 async function getCashFlow(userId, query = {}) {
   const summary = await getSummary(userId, query);
-  const ratio = summary.income_so_far > 0
-    ? Number((summary.expense_so_far / summary.income_so_far).toFixed(2))
-    : (summary.expense_so_far > 0 ? 999 : 0);
+  const ratio =
+    summary.income_so_far > 0
+      ? Number((summary.expense_so_far / summary.income_so_far).toFixed(2))
+      : summary.expense_so_far > 0
+        ? 999
+        : 0;
 
   return {
     ...summary,
     cashflow_ratio: ratio,
-    cashflow_status: ratio <= 0.5 ? 'Excellent' : ratio <= 0.8 ? 'Good' : ratio <= 1 ? 'Watch' : 'Critical'
+    cashflow_status: ratio <= 0.5 ? 'Excellent' : ratio <= 0.8 ? 'Good' : ratio <= 1 ? 'Watch' : 'Critical',
   };
 }
 
@@ -222,7 +241,7 @@ async function detectSubscriptions(userId) {
     amount: parseFloat(r.amount),
     occurrences: parseInt(r.occurrences, 10),
     first_seen: r.first_seen,
-    last_seen: r.last_seen
+    last_seen: r.last_seen,
   }));
 }
 
@@ -231,8 +250,7 @@ async function detectSpendingSpikes(userId, query = {}) {
   const current = await getSummary(userId, query);
   const monthYear = query.month_year || new Date().toISOString().substring(0, 7);
   const [year, month] = monthYear.split('-');
-  const prevMonth = new Date(Date.UTC(parseInt(year, 10), parseInt(month, 10) - 2, 1))
-    .toISOString().substring(0, 7);
+  const prevMonth = new Date(Date.UTC(parseInt(year, 10), parseInt(month, 10) - 2, 1)).toISOString().substring(0, 7);
 
   const prev = await getSummary(userId, { ...query, month_year: prevMonth });
 
@@ -244,7 +262,7 @@ async function detectSpendingSpikes(userId, query = {}) {
         type: 'spending_spike',
         title: 'Spending Spike Detected',
         message: `You spent ₹${current.expense_so_far.toFixed(2)} this month — ${pct.toFixed(0)}% more than last month (₹${prev.expense_so_far.toFixed(2)}).`,
-        severity: pct >= 50 ? 'high' : 'medium'
+        severity: pct >= 50 ? 'high' : 'medium',
       });
     }
   }
@@ -260,5 +278,5 @@ module.exports = {
   detectSpendingSpikes,
   resolveRangeParams,
   RANGE_MAP,
-  CHART_PALETTE
+  CHART_PALETTE,
 };

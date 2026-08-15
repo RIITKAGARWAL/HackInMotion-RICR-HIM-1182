@@ -10,14 +10,14 @@ let redisClient = null;
 const createRedisClient = () => {
   const options = {
     maxRetriesPerRequest: null, // Required for BullMQ compatibility
-    enableOfflineQueue: false,  // Don't queue commands if Redis is down
+    enableOfflineQueue: false, // Don't queue commands if Redis is down
     retryStrategy(times) {
       if (times > 3) {
         console.warn('⚠️ Redis connection unreachable. Running in fallback mode (Redis features disabled).');
         return null; // Stop retrying after 3 attempts to prevent log spamming
       }
       return Math.min(times * 200, 2000);
-    }
+    },
   };
 
   if (redisUrl) {
@@ -33,7 +33,7 @@ const createRedisClient = () => {
   return new Redis({
     host: redisHost,
     port: redisPort,
-    ...options
+    ...options,
   });
 };
 

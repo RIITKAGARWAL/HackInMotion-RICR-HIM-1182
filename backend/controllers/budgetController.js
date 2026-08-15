@@ -1,8 +1,14 @@
 const db = require('../config/db');
 const { invalidateUserCache } = require('../services/cacheService');
 
-const toInt = (v) => { const n = parseInt(v, 10); return isNaN(n) ? null : n; };
-const toFloat = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+const toInt = (v) => {
+  const n = parseInt(v, 10);
+  return isNaN(n) ? null : n;
+};
+const toFloat = (v) => {
+  const n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
+};
 
 const getBudgets = async (req, res) => {
   try {
@@ -62,7 +68,8 @@ const getBudgets = async (req, res) => {
         carried_over: carried,
         effective_limit: effectiveLimit,
         total_spent: toFloat(b.total_spent),
-        usage_percent: effectiveLimit > 0 ? Math.min(999, Math.round((toFloat(b.total_spent) / effectiveLimit) * 100)) : 0
+        usage_percent:
+          effectiveLimit > 0 ? Math.min(999, Math.round((toFloat(b.total_spent) / effectiveLimit) * 100)) : 0,
       };
     });
 
@@ -113,10 +120,11 @@ const updateBudget = async (req, res) => {
       return res.status(400).json({ error: 'Budget limit must be a positive number.' });
     }
 
-    const result = await db.query(
-      'UPDATE budgets SET monthly_limit = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
-      [limit, budgetId, userId]
-    );
+    const result = await db.query('UPDATE budgets SET monthly_limit = $1 WHERE id = $2 AND user_id = $3 RETURNING *', [
+      limit,
+      budgetId,
+      userId,
+    ]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Budget not found.' });
     }
@@ -137,10 +145,10 @@ const deleteBudget = async (req, res) => {
       return res.status(400).json({ error: 'Invalid budget id.' });
     }
 
-    const result = await db.query(
-      'DELETE FROM budgets WHERE id = $1 AND user_id = $2 RETURNING id',
-      [budgetId, userId]
-    );
+    const result = await db.query('DELETE FROM budgets WHERE id = $1 AND user_id = $2 RETURNING id', [
+      budgetId,
+      userId,
+    ]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Budget not found.' });
     }
@@ -218,5 +226,5 @@ module.exports = {
   deleteBudget,
   copyPastBudgets,
   getCarryOver,
-  setCarryOver
+  setCarryOver,
 };

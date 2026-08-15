@@ -2,13 +2,19 @@ const db = require('../config/db');
 const { invalidateUserCache } = require('../services/cacheService');
 const analytics = require('../services/analyticsService');
 
-const toInt = (v) => { const n = parseInt(v, 10); return isNaN(n) ? null : n; };
-const toFloat = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+const toInt = (v) => {
+  const n = parseInt(v, 10);
+  return isNaN(n) ? null : n;
+};
+const toFloat = (v) => {
+  const n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
+};
 
 const DEFAULT_ACCOUNTS = [
   { name: 'Cash', type: 'Cash', color_code: '#84cc16', icon_name: 'Wallet' },
   { name: 'Card', type: 'Card', color_code: '#ef4444', icon_name: 'CreditCard' },
-  { name: 'Savings', type: 'Savings', color_code: '#ec4899', icon_name: 'PiggyBank' }
+  { name: 'Savings', type: 'Savings', color_code: '#ec4899', icon_name: 'PiggyBank' },
 ];
 
 const getAccounts = async (req, res) => {
@@ -25,7 +31,7 @@ const getAccounts = async (req, res) => {
       for (const acc of DEFAULT_ACCOUNTS) {
         await db.query(
           'INSERT INTO accounts (user_id, name, type, balance, color_code, icon_name) VALUES ($1, $2, $3, $4, $5, $6)',
-          [userId, acc.name, acc.type, 0.00, acc.color_code, acc.icon_name]
+          [userId, acc.name, acc.type, 0.0, acc.color_code, acc.icon_name]
         );
       }
       accountRes = await db.query('SELECT * FROM accounts WHERE user_id = $1 ORDER BY id ASC', [userId]);
@@ -47,8 +53,8 @@ const getAccounts = async (req, res) => {
       summary: {
         all_accounts_balance: totalBalance,
         expense_so_far: toFloat(totalsRes.rows[0]?.expense_so_far),
-        income_so_far: toFloat(totalsRes.rows[0]?.income_so_far)
-      }
+        income_so_far: toFloat(totalsRes.rows[0]?.income_so_far),
+      },
     });
   } catch (error) {
     console.error('Get Accounts Error:', error);
@@ -59,7 +65,7 @@ const getAccounts = async (req, res) => {
 const createAccount = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, type = 'Savings', balance = 0.00, color_code = '#3b82f6', icon_name = 'Wallet' } = req.body || {};
+    const { name, type = 'Savings', balance = 0.0, color_code = '#3b82f6', icon_name = 'Wallet' } = req.body || {};
 
     if (!name || !String(name).trim()) {
       return res.status(400).json({ error: 'Account name is required.' });
@@ -90,7 +96,8 @@ const updateAccount = async (req, res) => {
     const body = req.body || {};
     const name = body.name !== undefined && String(body.name).trim() ? String(body.name).trim() : existing.rows[0].name;
     const type = body.type || existing.rows[0].type;
-    const balance = body.balance !== undefined && body.balance !== '' ? toFloat(body.balance) : toFloat(existing.rows[0].balance);
+    const balance =
+      body.balance !== undefined && body.balance !== '' ? toFloat(body.balance) : toFloat(existing.rows[0].balance);
     const color_code = body.color_code || existing.rows[0].color_code;
     const icon_name = body.icon_name || existing.rows[0].icon_name;
 
@@ -129,5 +136,5 @@ module.exports = {
   getAccounts,
   createAccount,
   updateAccount,
-  deleteAccount
+  deleteAccount,
 };

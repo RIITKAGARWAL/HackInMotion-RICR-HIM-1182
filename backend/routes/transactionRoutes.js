@@ -8,10 +8,15 @@ const uploadMiddleware = require('../middleware/uploadMiddleware');
 router.post('/', authMiddleware, transactionController.createTransaction);
 
 // Background CSV upload processing
-router.post('/upload-csv', authMiddleware, uploadMiddleware.fields([
-  { name: 'statement', maxCount: 1 },
-  { name: 'file', maxCount: 1 }
-]), transactionController.uploadCsv);
+router.post(
+  '/upload-csv',
+  authMiddleware,
+  uploadMiddleware.fields([
+    { name: 'statement', maxCount: 1 },
+    { name: 'file', maxCount: 1 },
+  ]),
+  transactionController.uploadCsv
+);
 
 // Fetch ledger transactions
 router.get('/', authMiddleware, transactionController.getTransactions);

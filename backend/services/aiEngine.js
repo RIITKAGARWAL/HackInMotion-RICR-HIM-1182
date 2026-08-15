@@ -84,9 +84,7 @@ exports.calculateHealthScore = async (userId, monthYear) => {
           calculated_at = CURRENT_TIMESTAMP
       RETURNING *
     `;
-    const healthRes = await db.query(upsertHealthQuery, [
-      userId, score, savingsRate.toFixed(2), monthYear, status
-    ]);
+    const healthRes = await db.query(upsertHealthQuery, [userId, score, savingsRate.toFixed(2), monthYear, status]);
 
     const saved = healthRes.rows[0];
     return { ...saved, totalIncome, totalExpense };
@@ -106,15 +104,19 @@ exports.generateAIInsights = async (userId, monthYear) => {
   const insightsCreated = [];
 
   const insertInsight = async ({ type, title, message, severity }) => {
-    const dupCheck = await db.query(
-      'SELECT id FROM ai_insights WHERE user_id = $1 AND title = $2 AND message = $3',
-      [userId, title, message]
-    );
+    const dupCheck = await db.query('SELECT id FROM ai_insights WHERE user_id = $1 AND title = $2 AND message = $3', [
+      userId,
+      title,
+      message,
+    ]);
     if (dupCheck.rows.length === 0) {
-      await db.query(
-        'INSERT INTO ai_insights (user_id, type, title, message, severity) VALUES ($1, $2, $3, $4, $5)',
-        [userId, type, title, message, severity]
-      );
+      await db.query('INSERT INTO ai_insights (user_id, type, title, message, severity) VALUES ($1, $2, $3, $4, $5)', [
+        userId,
+        type,
+        title,
+        message,
+        severity,
+      ]);
       insightsCreated.push({ title, severity, type });
     }
   };
@@ -145,14 +147,14 @@ exports.generateAIInsights = async (userId, monthYear) => {
         type: 'budget_alert',
         title: `Budget Exceeded: ${row.category_name}`,
         message: `You have spent ${pctUsed}% (${CURRENCY}${spent.toFixed(2)}) of your ${CURRENCY}${limit.toFixed(2)} limit for ${row.category_name} this month.`,
-        severity: 'high'
+        severity: 'high',
       });
     } else if (pctUsed >= 80) {
       await insertInsight({
         type: 'budget_alert',
         title: `Budget Warning: ${row.category_name}`,
         message: `You have used ${pctUsed}% (${CURRENCY}${spent.toFixed(2)}) of your ${CURRENCY}${limit.toFixed(2)} monthly allowance for ${row.category_name}.`,
-        severity: 'medium'
+        severity: 'medium',
       });
     }
   }
@@ -164,7 +166,7 @@ exports.generateAIInsights = async (userId, monthYear) => {
       type: 'recurring_flag',
       title: `Recurring Expense: ${sub.description}`,
       message: `"${sub.description}" (${CURRENCY}${sub.amount.toFixed(2)}) charged ${sub.occurrences} times since ${sub.first_seen}. Consider reviewing if you still use it.`,
-      severity: sub.occurrences >= 4 ? 'medium' : 'low'
+      severity: sub.occurrences >= 4 ? 'medium' : 'low',
     });
   }
 
@@ -210,10 +212,11 @@ exports.streamChatReply = async ({ userId, prompt, res }) => {
         messages: [
           {
             role: 'system',
-            content: 'You are Cleo, a witty but kind AI financial copilot. Use the live financial context provided to give concise, actionable advice. Roast gently when asked, but always stay helpful.'
+            content:
+              'You are Cleo, a witty but kind AI financial copilot. Use the live financial context provided to give concise, actionable advice. Roast gently when asked, but always stay helpful.',
           },
-          { role: 'user', content: `${context}\n\nUser question: ${prompt}` }
-        ]
+          { role: 'user', content: `${context}\n\nUser question: ${prompt}` },
+        ],
       });
 
       for await (const part of stream) {
@@ -254,13 +257,22 @@ async function buildLiveContext(userId) {
   const summary = await analytics.getSummary(userId, { month_year: currentMonth() });
   const breakdown = await analytics.getCategoryBreakdown(userId, { month_year: currentMonth() });
   const subs = await analytics.detectSubscriptions(userId);
-  const topCategories = breakdown.categories.filter((c) => c.type === 'expense').slice(0, 5)
-    .map((c) => `${c.category}: ${CURRENCY}${c.amount.toFixed(2)} (${c.percentage}%)`).join('; ');
-  return `LIVE FINANCIAL CONTEXT\n- Income: ${CURRENCY}${summary.income_so_far.toFixed(2)}\n- Expenses: ${CURRENCY}${summary.expense_so_far.toFixed(2)}\n- Net: ${CURRENCY}${summary.net_so_far.toFixed(2)}\n- Top expense categories: ${topCategories || 'none'}\n- Recurring subs: ${subs.slice(0, 5).map((s) => `${s.description} (${CURRENCY}${s.amount.toFixed(2)} x${s.occurrences})`).join(', ') || 'none'}`;
+  const topCategories = breakdown.categories
+    .filter((c) => c.type === 'expense')
+    .slice(0, 5)
+    .map((c) => `${c.category}: ${CURRENCY}${c.amount.toFixed(2)} (${c.percentage}%)`)
+    .join('; ');
+  return `LIVE FINANCIAL CONTEXT\n- Income: ${CURRENCY}${summary.income_so_far.toFixed(2)}\n- Expenses: ${CURRENCY}${summary.expense_so_far.toFixed(2)}\n- Net: ${CURRENCY}${summary.net_so_far.toFixed(2)}\n- Top expense categories: ${topCategories || 'none'}\n- Recurring subs: ${
+    subs
+      .slice(0, 5)
+      .map((s) => `${s.description} (${CURRENCY}${s.amount.toFixed(2)} x${s.occurrences})`)
+      .join(', ') || 'none'
+  }`;
 }
 
 async function fetchBudgets(userId, monthYear) {
-  const res = await db.query(`
+  const res = await db.query(
+    `
     SELECT
       c.name AS category_name,
       COALESCE(b.monthly_limit, 0) AS limit_amount,
@@ -271,7 +283,9 @@ async function fetchBudgets(userId, monthYear) {
       AND t.user_id = b.user_id AND TO_CHAR(t.date, 'YYYY-MM') = $2
     WHERE b.user_id = $1 AND b.month_year = $3
     GROUP BY c.name, b.monthly_limit
-  `, [userId, monthYear, monthYear]);
+  `,
+    [userId, monthYear, monthYear]
+  );
   return res.rows;
 }
 
@@ -285,9 +299,11 @@ function composeReply(text, { summary, breakdown, subs, budgets }) {
       return [
         'Oh honey, let me take a look at this. ',
         `You dropped ${fmt(roastTarget.amount)} on ${roastTarget.category} — that is ${roastTarget.percentage}% of everything you spent this month. `,
-        topExpense.length > 1 ? `And ${topExpense[1].category} was right behind it with ${fmt(topExpense[1].amount)}. ` : '',
+        topExpense.length > 1
+          ? `And ${topExpense[1].category} was right behind it with ${fmt(topExpense[1].amount)}. `
+          : '',
         'I am not judging. I am just saying your credit card might be trying to file a restraining order. ',
-        'Fix it by setting a category budget and I will make sure you stay in line. Promise.'
+        'Fix it by setting a category budget and I will make sure you stay in line. Promise.',
       ].filter(Boolean);
     }
     return ['You have no spending to roast yet — which honestly is the flex of the year. Keep it up!'];
@@ -295,27 +311,41 @@ function composeReply(text, { summary, breakdown, subs, budgets }) {
 
   if (text.includes('subscription') || text.includes('recurring')) {
     if (subs.length === 0) {
-      return ['Good news: I could not find any recurring subscriptions. Your accounts are squeaky clean.', 'Keep an eye on any charge that shows up month after month though.'];
+      return [
+        'Good news: I could not find any recurring subscriptions. Your accounts are squeaky clean.',
+        'Keep an eye on any charge that shows up month after month though.',
+      ];
     }
-    const names = subs.slice(0, 4).map((s) => `${s.description} (${fmt(s.amount)} x${s.occurrences})`).join(', ');
+    const names = subs
+      .slice(0, 4)
+      .map((s) => `${s.description} (${fmt(s.amount)} x${s.occurrences})`)
+      .join(', ');
     const total = subs.reduce((sum, s) => sum + s.amount, 0);
     return [
       `I found ${subs.length} recurring subscription(s): ${names}. `,
       `They are eating roughly ${fmt(total)} per cycle. `,
-      `Cancel any you do not use — that money could go straight into savings.`
+      `Cancel any you do not use — that money could go straight into savings.`,
     ];
   }
 
   if (text.includes('budget') || text.includes('track') || text.includes('limit')) {
     if (budgets.length === 0) {
-      return ['You have not set any category budgets yet. ', 'Head to the Budgets view and set limits, then I can actually tell you whether you are on track.'];
+      return [
+        'You have not set any category budgets yet. ',
+        'Head to the Budgets view and set limits, then I can actually tell you whether you are on track.',
+      ];
     }
     const over = budgets.filter((b) => parseFloat(b.total_spent) > parseFloat(b.limit_amount));
-    const near = budgets.filter((b) => parseFloat(b.total_spent) <= parseFloat(b.limit_amount) && parseFloat(b.total_spent) >= parseFloat(b.limit_amount) * 0.8);
+    const near = budgets.filter(
+      (b) =>
+        parseFloat(b.total_spent) <= parseFloat(b.limit_amount) &&
+        parseFloat(b.total_spent) >= parseFloat(b.limit_amount) * 0.8
+    );
     const parts = [];
     if (over.length) parts.push(`You are over budget on ${over.map((b) => b.category_name).join(', ')}. `);
     if (near.length) parts.push(`${near.map((b) => b.category_name).join(', ')} are getting close to their limits. `);
-    if (!over.length && !near.length) parts.push('Great news — you are comfortably within all of your category budgets. ');
+    if (!over.length && !near.length)
+      parts.push('Great news — you are comfortably within all of your category budgets. ');
     parts.push('I would trim the over-budget categories first and reallocate before month end.');
     return parts;
   }
@@ -328,21 +358,27 @@ function composeReply(text, { summary, breakdown, subs, budgets }) {
       `That is a ${verdict} position. `,
       rate >= 10
         ? 'Keep pushing — a 20% savings rate is the golden target.'
-        : `Aim to keep expenses under 80% of income to build a healthier buffer.`
+        : `Aim to keep expenses under 80% of income to build a healthier buffer.`,
     ];
   }
 
   if (text.includes('spike') || text.includes('anomal') || text.includes('alert')) {
     const spike = topExpense[0];
     if (spike && spike.percentage >= 30) {
-      return [`Heads up: ${spike.category} is ${spike.percentage}% of your spending — that is a concentration worth watching.`, 'Set a budget on it and I will alert you the moment it approaches the line.'];
+      return [
+        `Heads up: ${spike.category} is ${spike.percentage}% of your spending — that is a concentration worth watching.`,
+        'Set a budget on it and I will alert you the moment it approaches the line.',
+      ];
     }
-    return ['I scanned your numbers for anomalies — nothing screaming at me right now. ', 'I will ping you the second something looks off.'];
+    return [
+      'I scanned your numbers for anomalies — nothing screaming at me right now. ',
+      'I will ping you the second something looks off.',
+    ];
   }
 
   // Default general analysis
   const parts = [
-    `Here is your snapshot: income ${fmt(summary.income_so_far)}, expenses ${fmt(summary.expense_so_far)}, net ${fmt(summary.net_so_far)}. `
+    `Here is your snapshot: income ${fmt(summary.income_so_far)}, expenses ${fmt(summary.expense_so_far)}, net ${fmt(summary.net_so_far)}. `,
   ];
   if (topExpense.length) {
     parts.push(`Your top category is ${topExpense[0].category} at ${fmt(topExpense[0].amount)}. `);

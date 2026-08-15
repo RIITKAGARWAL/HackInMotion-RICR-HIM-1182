@@ -1,88 +1,163 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
     <title>SpenSight - Create Account</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
     <!-- Fixed mobile top navbar (shown < 900px) -->
     <header class="mobile-topbar mobile-topbar-simple" id="mobileTopbar">
-        <a class="mobile-brand" href="register.html" aria-label="SpenSight home">
-            <div class="brand-badge" id="mobileBrandBadge"><span data-icon="Wallet"></span></div>
-            <span class="mobile-brand-name">SpenSight</span>
-        </a>
+      <a class="mobile-brand" href="register.html" aria-label="SpenSight home">
+        <div class="brand-badge" id="mobileBrandBadge"><span data-icon="Wallet"></span></div>
+        <span class="mobile-brand-name">SpenSight</span>
+      </a>
     </header>
     <div class="auth-layout">
-        <div class="welcome-panel">
-            <div class="brand-header">
-                <div class="brand-badge"><span data-icon="Wallet"></span></div>
-                <span>SpenSight</span>
-            </div>
-
-            <div class="welcome-body">
-                <p class="hero-eyebrow"><span data-icon="Sparkles"></span> JOIN SPENSIGHT TODAY</p>
-                <h1 class="hero-heading">Start your <span>financial journey.</span></h1>
-                <p class="sub-text">Automate CSV statement parsing and gain full financial clarity with AI-powered insights.</p>
-
-                <div class="auth-feature-row">
-                    <span data-icon="ShieldCheck"></span>
-                    <span>Bank-grade security for your data</span>
-                </div>
-                <div class="auth-feature-row">
-                    <span data-icon="PieChart"></span>
-                    <span>Smart budgets that carry over</span>
-                </div>
-                <div class="auth-feature-row">
-                    <span data-icon="Target"></span>
-                    <span>AI-powered spending health score</span>
-                </div>
-            </div>
-
-            <p style="font-size: 12px; color: var(--text-muted);">© 2026 SpenSight. All rights reserved.</p>
+      <div class="welcome-panel">
+        <div class="brand-header">
+          <div class="brand-badge"><span data-icon="Wallet"></span></div>
+          <span>SpenSight</span>
         </div>
 
-        <div>
-            <div class="auth-card">
-                <h2 style="font-size: 24px; font-weight: 800;">Create Account</h2>
-                <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Sign up to start tracking your finances.</p>
+        <div class="welcome-body">
+          <p class="hero-eyebrow"><span data-icon="Sparkles"></span> JOIN SPENSIGHT TODAY</p>
+          <h1 class="hero-heading">Start your <span>financial journey.</span></h1>
+          <p class="sub-text">
+            Automate CSV statement parsing and gain full financial clarity with AI-powered insights.
+          </p>
 
-                <form id="registerForm" style="margin-top: 20px;">
-                    <div style="margin-bottom: 14px;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Full Name</label>
-                        <div style="position: relative;">
-                            <span data-icon="User" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted);"></span>
-                            <input type="text" id="regName" class="input-field" placeholder="Enter your full name" style="padding-left: 40px;" autocomplete="name" required>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 14px;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Email / User ID</label>
-                        <div style="position: relative;">
-                            <span data-icon="Mail" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted);"></span>
-                            <input type="email" id="regEmail" class="input-field" placeholder="Enter your email / user ID" style="padding-left: 40px;" autocomplete="email" inputmode="email" required>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Password / Passcode</label>
-                        <div style="position: relative;">
-                            <span data-icon="Lock" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted);"></span>
-                            <input type="password" id="regPassword" class="input-field" placeholder="Min 6 characters" style="padding-left: 40px;" autocomplete="new-password" required>
-                        </div>
-                    </div>
-
-                    <button type="submit" id="regSubmitBtn" class="btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;">
-                        Create Account
-                    </button>
-                </form>
-
-                <div style="text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-muted);">
-                    Already have an account? <a href="login.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Login here</a>
-                </div>
-            </div>
+          <div class="auth-feature-row">
+            <span data-icon="ShieldCheck"></span>
+            <span>Bank-grade security for your data</span>
+          </div>
+          <div class="auth-feature-row">
+            <span data-icon="PieChart"></span>
+            <span>Smart budgets that carry over</span>
+          </div>
+          <div class="auth-feature-row">
+            <span data-icon="Target"></span>
+            <span>AI-powered spending health score</span>
+          </div>
         </div>
+
+        <p style="font-size: 12px; color: var(--text-muted)">© 2026 SpenSight. All rights reserved.</p>
+      </div>
+
+      <div>
+        <div class="auth-card">
+          <h2 style="font-size: 24px; font-weight: 800">Create Account</h2>
+          <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px">
+            Sign up to start tracking your finances.
+          </p>
+
+          <form id="registerForm" style="margin-top: 20px">
+            <div style="margin-bottom: 14px">
+              <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px">Full Name</label>
+              <div style="position: relative">
+                <span
+                  data-icon="User"
+                  style="
+                    position: absolute;
+                    left: 14px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 16px;
+                    height: 16px;
+                    color: var(--text-muted);
+                  "
+                ></span>
+                <input
+                  type="text"
+                  id="regName"
+                  class="input-field"
+                  placeholder="Enter your full name"
+                  style="padding-left: 40px"
+                  autocomplete="name"
+                  required
+                />
+              </div>
+            </div>
+
+            <div style="margin-bottom: 14px">
+              <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px"
+                >Email / User ID</label
+              >
+              <div style="position: relative">
+                <span
+                  data-icon="Mail"
+                  style="
+                    position: absolute;
+                    left: 14px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 16px;
+                    height: 16px;
+                    color: var(--text-muted);
+                  "
+                ></span>
+                <input
+                  type="email"
+                  id="regEmail"
+                  class="input-field"
+                  placeholder="Enter your email / user ID"
+                  style="padding-left: 40px"
+                  autocomplete="email"
+                  inputmode="email"
+                  required
+                />
+              </div>
+            </div>
+
+            <div style="margin-bottom: 20px">
+              <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px"
+                >Password / Passcode</label
+              >
+              <div style="position: relative">
+                <span
+                  data-icon="Lock"
+                  style="
+                    position: absolute;
+                    left: 14px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 16px;
+                    height: 16px;
+                    color: var(--text-muted);
+                  "
+                ></span>
+                <input
+                  type="password"
+                  id="regPassword"
+                  class="input-field"
+                  placeholder="Min 6 characters"
+                  style="padding-left: 40px"
+                  autocomplete="new-password"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              id="regSubmitBtn"
+              class="btn-primary"
+              style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%"
+            >
+              Create Account
+            </button>
+          </form>
+
+          <div style="text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-muted)">
+            Already have an account?
+            <a href="login.html" style="color: var(--primary); text-decoration: none; font-weight: 600">Login here</a>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="toast-container" id="toastContainer"></div>
@@ -90,5 +165,5 @@
     <script src="js/icons.js"></script>
     <script src="js/api.js"></script>
     <script src="js/register.js"></script>
-</body>
+  </body>
 </html>

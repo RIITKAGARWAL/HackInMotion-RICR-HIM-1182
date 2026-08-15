@@ -41,7 +41,7 @@ const getInsights = async (req, res) => {
       title: r.title,
       message: r.message,
       severity: r.severity,
-      created_at: r.created_at
+      created_at: r.created_at,
     }));
 
     return res.json({ insights });

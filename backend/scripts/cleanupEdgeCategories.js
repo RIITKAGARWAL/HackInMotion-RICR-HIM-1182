@@ -34,9 +34,7 @@ async function cleanupEdgeCategories() {
     );
 
     // 3. Delete the dummy categories
-    const categoriesDeleted = await client.query(
-      `DELETE FROM categories WHERE name LIKE 'EdgeCat%'`
-    );
+    const categoriesDeleted = await client.query(`DELETE FROM categories WHERE name LIKE 'EdgeCat%'`);
 
     await client.query('COMMIT');
 
